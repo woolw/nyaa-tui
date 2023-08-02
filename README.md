@@ -16,3 +16,14 @@ cd nyaa-tui/
 ```
 cargo run --release
 ```
+# Crates used
+
+- [unhtml](https://crates.io/crates/unhtml)
+- [tokio](https://crates.io/crates/tokio)
+- [reqwest](https://crates.io/crates/reqwest)
+- [tui](https://crates.io/crates/tui)
+
+# Dependencies
+
+On Linux: 
+- openssl

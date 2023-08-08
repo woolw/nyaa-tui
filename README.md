@@ -2,8 +2,6 @@
 
 small project to learn rust, reqwest, tokio
 
-Use at your own Risk
-
 currently still very much so WIP
 
 ### Current Features:
@@ -13,6 +11,7 @@ currently still very much so WIP
 
 # Setup
 
+## Source
 1. clone the repo
 ```
 git clone https://github.com/woolw/nyaa-tui.git
@@ -25,6 +24,11 @@ cd nyaa-tui/
 ```
 cargo run --release
 ```
+
+## Package
+
+none so far
+
 # Crates used
 
 - unhtml ([crates.io](https://crates.io/crates/unhtml) | [github](https://github.com/Hexilee/unhtml.rs))
@@ -38,3 +42,7 @@ cargo run --release
 
 On Linux: 
 - openssl
+
+# Disclaimer 
+
+[read the disclaimer here](https://github.com/woolw/nyaa-tui/blob/master/DISCLAIMER.md)

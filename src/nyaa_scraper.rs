@@ -1,64 +1,81 @@
+use self::datamodel::{Body, QueryParameters};
+use reqwest_middleware::ClientBuilder;
+use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
+use std::{fs::File, io::Write};
 use unhtml::FromHtml;
 
-// has to be done with nested structs, bcs topLevel Vec doesn't work
-#[derive(FromHtml, Debug)]
-struct TBody {
-    #[html(selector = ".default")]
-    html_entries: Vec<ListEntry>,
-}
+pub mod datamodel;
 
-#[derive(FromHtml, Debug)]
-pub struct ListEntry {
-    #[html(selector = ".category-icon", attr = "alt")]
-    category: String,
-    #[html(selector = "td:nth-child(2)", attr = "inner")]
-    name: String,
-    #[html(selector = "td:nth-child(3)")]
-    download_links: DownloadLinks,
-    #[html(selector = "td:nth-child(4)", attr = "inner")]
-    size: String,
-    #[html(selector = "td:nth-child(5)", attr = "inner")]
-    date: String,
-    #[html(selector = "td:nth-child(6)", attr = "inner")]
-    pub seeder: u32,
-    #[html(selector = "td:nth-child(7)", attr = "inner")]
-    leecher: u32,
-    #[html(selector = "td:nth-child(8)", attr = "inner")]
-    downloads: u32,
-}
+const BASE_URL: &str = "https://nyaa.si/";
 
-#[derive(FromHtml, Debug)]
-pub struct DownloadLinks {
-    #[html(selector = "a:nth-child(1)", attr = "href")]
-    torrent: String,
-    #[html(selector = "a:nth-child(2)", attr = "href")]
-    magnetic: String,
-}
+pub async fn extract_body(params: Option<QueryParameters>) -> Body {
+    let html = get_response(params).await;
 
-async fn get_html() -> String {
-    let response = reqwest::get("https://nyaa.si/").await;
-
-    let mut html: String = "".to_string();
-    match response {
-        Ok(it) => html = it.text().await.unwrap(),
-        Err(err) => println!("{:#?}", err),
-    };
-
-    //println!("{:#?}", html);
-
-    html
-}
-
-pub async fn get_list_entries() -> Vec<ListEntry> {
-    let html = get_html().await;
-
-    let t_body = TBody::from_html(&html);
+    let t_body = Body::from_html(&html.unwrap_or("".to_string()));
 
     match t_body {
         Ok(res) => {
-            println!("{:#?}", res);
-            res.html_entries
+            create_demo_files("result.json", format!("{res:?}"));
+            res
         }
-        Err(err) => panic!("t_bodies were not OK {:#?}", err),
+        Err(err) => panic!("the extracted Body was not OK {err:#?}"),
+    }
+}
+
+async fn get_response(params: Option<QueryParameters>) -> Result<String, &'static str> {
+    let query_url = get_url(params);
+
+    let retry_policy = ExponentialBackoff::builder().build_with_max_retries(3);
+    let client = ClientBuilder::new(reqwest::Client::new())
+        .with(RetryTransientMiddleware::new_with_policy(retry_policy))
+        .build();
+
+    let response = client.get(&query_url).send().await;
+
+    let mut html = "".to_string();
+    match response {
+        Ok(it) => {
+            html = it.text().await.unwrap_or("".to_string());
+            create_demo_files("demo.html", format!("{html:#}"));
+        }
+        Err(err) => {
+            create_demo_files("log.txt", format!("{} \n {}", err, query_url));
+        }
+    };
+
+    Ok(html)
+}
+
+fn get_url(params: Option<QueryParameters>) -> String {
+    let mut query_url: String = BASE_URL.to_string();
+
+    match params {
+        Some(ps) => {
+            query_url.push_str(
+                format!(
+                    "?f={}&c={}&q={}&p={}",
+                    ps.filter.value, ps.category.value, ps.search_query, ps.page
+                )
+                .as_str(),
+            );
+        }
+        None => {}
+    }
+
+    query_url
+}
+
+// soley for debugging
+fn create_demo_files(filename: &str, data: String) {
+    let file = File::create(format!("demo_files/{filename:#}"));
+    match file {
+        Ok(mut f) => match write!(f, "{:#?}", data) {
+            Err(err) => println!("{err:#?}"),
+            _ => {}
+        },
+        Err(err) => {
+            println!("{err:#?}");
+            panic!()
+        }
     }
 }

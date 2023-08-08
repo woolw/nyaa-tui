@@ -1,6 +1,8 @@
 # nyaa-tui
 
-small project to familiarize myself with tui-rs and rust in general
+small project to learn rust, reqwest, tokio
+
+Use at your own Risk
 
 currently still very much so WIP
 
@@ -28,6 +30,8 @@ cargo run --release
 - unhtml ([crates.io](https://crates.io/crates/unhtml) | [github](https://github.com/Hexilee/unhtml.rs))
 - tokio ([crates.io](https://crates.io/crates/tokio) | [github](https://github.com/tokio-rs/tokio))
 - reqwest ([crates.io](https://crates.io/crates/reqwest) | [github](https://github.com/seanmonstar/reqwest))
+- reqwest-retry ([crates.io](https://crates.io/crates/reqwest-retry) | [github](https://github.com/TrueLayer/reqwest-middleware))
+- reqwest-middleware ([crates.io](https://crates.io/crates/reqwest-middleware) | [github](https://github.com/TrueLayer/reqwest-middleware))
 - tui ([crates.io](https://crates.io/crates/tui) | [github](https://github.com/fdehau/tui-rs))
 
 # Dependencies

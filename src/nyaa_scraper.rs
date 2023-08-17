@@ -1,28 +1,29 @@
-use self::datamodel::{Body, QueryParameters};
+use crate::datamodel::*;
 use reqwest_middleware::ClientBuilder;
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use std::{fs::File, io::Write};
 use unhtml::FromHtml;
 
-pub mod datamodel;
-
 const BASE_URL: &str = "https://nyaa.si/";
 
-pub async fn extract_body(params: Option<QueryParameters>) -> Body {
-    let html = get_response(params).await;
+pub async fn extract_body(params: Option<QueryParameters>, write_demo_files: bool) -> Body {
+    let html = get_response(params, &write_demo_files).await;
 
     let t_body = Body::from_html(&html.unwrap_or("".to_string()));
 
     match t_body {
         Ok(res) => {
-            create_demo_files("result.json", format!("{res:?}"));
+            create_demo_files("result.json", format!("{res:?}"), &write_demo_files);
             res
         }
         Err(err) => panic!("the extracted Body was not OK {err:#?}"),
     }
 }
 
-async fn get_response(params: Option<QueryParameters>) -> Result<String, &'static str> {
+async fn get_response(
+    params: Option<QueryParameters>,
+    write_demo_files: &bool,
+) -> Result<String, &'static str> {
     let query_url = get_url(params);
 
     let retry_policy = ExponentialBackoff::builder().build_with_max_retries(3);
@@ -36,10 +37,14 @@ async fn get_response(params: Option<QueryParameters>) -> Result<String, &'stati
     match response {
         Ok(it) => {
             html = it.text().await.unwrap_or("".to_string());
-            create_demo_files("demo.html", format!("{html:#}"));
+            create_demo_files("demo.html", format!("{html:#}"), write_demo_files);
         }
         Err(err) => {
-            create_demo_files("log.txt", format!("{} \n {}", err, query_url));
+            create_demo_files(
+                "log.txt",
+                format!("{} \n {}", err, query_url),
+                write_demo_files,
+            );
         }
     };
 
@@ -66,16 +71,18 @@ fn get_url(params: Option<QueryParameters>) -> String {
 }
 
 // soley for debugging
-fn create_demo_files(filename: &str, data: String) {
-    let file = File::create(format!("demo_files/{filename:#}"));
-    match file {
-        Ok(mut f) => match write!(f, "{:#?}", data) {
-            Err(err) => println!("{err:#?}"),
-            _ => {}
-        },
-        Err(err) => {
-            println!("{err:#?}");
-            panic!()
+fn create_demo_files(filename: &str, data: String, write_demo_files: &bool) {
+    if *write_demo_files {
+        let file = File::create(format!("demo_files/{filename:#}"));
+        match file {
+            Ok(mut f) => match write!(f, "{:#?}", data) {
+                Err(err) => println!("{err:#?}"),
+                _ => {}
+            },
+            Err(err) => {
+                println!("{err:#?}");
+                panic!()
+            }
         }
     }
 }

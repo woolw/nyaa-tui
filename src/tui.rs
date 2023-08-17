@@ -97,7 +97,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
     let titles = app
         .titles
         .iter()
-        .map(|t| Line::from(vec![t.white()]))
+        .map(|t| Line::from(vec![t.reset()])) // i do not know why it doesn´t accept only t
         .collect();
     let tabs = Tabs::new(titles)
         .block(Block::default().borders(Borders::ALL))

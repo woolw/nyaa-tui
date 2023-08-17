@@ -1,3 +1,5 @@
+//-----scraper--------------------------------------------------------------------------------------------------------------
+
 use unhtml::FromHtml;
 
 pub struct QueryParameters {
@@ -64,4 +66,12 @@ pub struct PageInfo {
     pub active: String,
     #[html(selector = "li:last-child > a", attr = "href")]
     pub next: Option<String>,
+}
+
+//-----tui------------------------------------------------------------------------------------------------------------------
+
+pub struct App<'a> {
+    pub titles: Vec<&'a str>,
+    pub index: usize,
+    pub show_popup: bool,
 }

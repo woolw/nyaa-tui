@@ -1,10 +1,8 @@
-use self::datamodel::{Body, QueryParameters};
+use crate::datamodel::*;
 use reqwest_middleware::ClientBuilder;
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use std::{fs::File, io::Write};
 use unhtml::FromHtml;
-
-pub mod datamodel;
 
 const BASE_URL: &str = "https://nyaa.si/";
 

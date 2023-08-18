@@ -38,7 +38,7 @@ pub async fn tui() -> Result<(), io::Error> {
 impl<'a> App<'a> {
     fn new() -> App<'a> {
         App {
-            titles: vec!["nyaa", "downloads", "help"],
+            titles: vec!["home", "nyaa", "downloads"],
             index: 0,
             show_popup: false,
         }
@@ -115,9 +115,9 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
 
     // content of the Main-Buffer
     match app.index {
-        0 => {} // TODO draw list from body entries
-        1 => {} // TODO show downloads
-        2 => {} // TODO show help
+        0 => {} // TODO show help / home
+        1 => {} // TODO draw list from body entries
+        2 => {} // TODO show downloads
         _ => unreachable!(),
     };
 

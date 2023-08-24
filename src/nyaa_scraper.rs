@@ -52,7 +52,7 @@ async fn get_response(
 }
 
 fn get_url(params: Option<QueryParameters>) -> String {
-    let mut query_url: String = BASE_URL.to_string();
+    let mut query_url = BASE_URL.to_string();
 
     match params {
         Some(ps) => {
@@ -70,7 +70,7 @@ fn get_url(params: Option<QueryParameters>) -> String {
     query_url
 }
 
-// soley for debugging
+/// soley for debugging
 fn create_demo_files(filename: &str, data: String, write_demo_files: &bool) {
     if *write_demo_files {
         let file = File::create(format!("demo_files/{filename:#}"));

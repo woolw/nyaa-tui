@@ -103,19 +103,21 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
         .block(Block::default().borders(Borders::ALL))
         .select(app.index)
         .style(Style::default())
-        .highlight_style(Style::default().add_modifier(Modifier::BOLD).underlined());
+        .highlight_style(
+            Style::default()
+                .add_modifier(Modifier::REVERSED)
+                .add_modifier(Modifier::BOLD),
+        );
     f.render_widget(tabs, chunks[0]);
 
     // Main-Buffer
     let main_block = Block::default()
-        .title(app.titles[app.index])
         .borders(Borders::ALL)
         .style(Style::default());
-    f.render_widget(main_block, chunks[1]);
 
     // content of the Main-Buffer
     match app.index {
-        0 => {} // TODO show help / home
+        0 => draw_home(f, chunks[1], main_block),
         1 => {} // TODO draw list from body entries
         2 => {} // TODO show downloads
         _ => unreachable!(),
@@ -155,4 +157,100 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
             .as_ref(),
         )
         .split(popup_layout[1])[1]
+}
+
+fn draw_home<B>(f: &mut Frame<B>, area: Rect, block: Block<'_>)
+where
+    B: Backend,
+{
+    let text = vec![
+        text::Line::from(""),
+        text::Line::from(""),
+        text::Line::from(""),
+        text::Line::from(Span::styled(
+            "Welcome to nyaa-tui",
+            Style::default().add_modifier(Modifier::BOLD),
+        )),
+        text::Line::from(""),
+        text::Line::from(Span::styled(
+            "Controlls:",
+            Style::default().add_modifier(Modifier::BOLD),
+        )),
+        text::Line::from(""),
+        text::Line::from(vec![
+            Span::styled(
+                "left:",
+                Style::default()
+                    .add_modifier(Modifier::ITALIC)
+                    .fg(Color::Blue),
+            ),
+            Span::from(" [h], [BACK_TAB], [LEFT_ARROW_KEY]"),
+        ]),
+        text::Line::from(""),
+        text::Line::from(vec![
+            Span::styled(
+                "right:",
+                Style::default()
+                    .add_modifier(Modifier::ITALIC)
+                    .fg(Color::Red),
+            ),
+            Span::from(" [l], [TAB], [RIGHT_ARROW_KEY]"),
+        ]),
+        text::Line::from(""),
+        text::Line::from(vec![
+            Span::styled(
+                "up:",
+                Style::default()
+                    .add_modifier(Modifier::ITALIC)
+                    .fg(Color::Yellow),
+            ),
+            Span::from(" [j], [UP_ARROW_KEY]"),
+        ]),
+        text::Line::from(""),
+        text::Line::from(vec![
+            Span::styled(
+                "down:",
+                Style::default()
+                    .add_modifier(Modifier::ITALIC)
+                    .fg(Color::Green),
+            ),
+            Span::from(" [k], [DOWN_ARROW_KEY]"),
+        ]),
+        text::Line::from(""),
+        text::Line::from(vec![
+            Span::styled(
+                "select:",
+                Style::default()
+                    .add_modifier(Modifier::ITALIC)
+                    .fg(Color::Magenta),
+            ),
+            Span::from(" [ENTER]"),
+        ]),
+        text::Line::from(""),
+        text::Line::from(vec![
+            Span::styled(
+                "find:",
+                Style::default()
+                    .add_modifier(Modifier::ITALIC)
+                    .fg(Color::Rgb(0xff, 0x8c, 0x00)),
+            ),
+            Span::from(" [f]"),
+        ]),
+        text::Line::from(""),
+        text::Line::from(vec![
+            Span::styled(
+                "exit:",
+                Style::default()
+                    .add_modifier(Modifier::ITALIC)
+                    .fg(Color::White),
+            ),
+            Span::from(" [q]"),
+        ]),
+    ];
+
+    let paragraph = Paragraph::new(text)
+        .block(block)
+        .wrap(Wrap { trim: true })
+        .alignment(Alignment::Center);
+    f.render_widget(paragraph, area);
 }

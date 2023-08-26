@@ -1,6 +1,6 @@
 use crate::datamodel::App;
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
+    event::{DisableMouseCapture, EnableMouseCapture},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -16,8 +16,8 @@ pub async fn tui() -> Result<(), io::Error> {
     let mut terminal = Terminal::new(backend)?;
 
     // create app and run it
-    let app = App::new();
-    let res = run_app(&mut terminal, app);
+    let app = App::new().await;
+    let res = app.run(&mut terminal).await;
 
     // restore terminal
     disable_raw_mode()?;
@@ -35,55 +35,7 @@ pub async fn tui() -> Result<(), io::Error> {
     Ok(())
 }
 
-impl<'a> App<'a> {
-    fn new() -> App<'a> {
-        App {
-            titles: vec!["home", "nyaa", "downloads"],
-            index: 0,
-            show_popup: false,
-        }
-    }
-
-    pub fn next_tab(&mut self) {
-        self.index = (self.index + 1) % self.titles.len();
-    }
-
-    pub fn previous_tab(&mut self) {
-        if self.index > 0 {
-            self.index -= 1;
-        } else {
-            self.index = self.titles.len() - 1;
-        }
-    }
-}
-
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<()> {
-    loop {
-        terminal.draw(|f| ui(f, &app))?;
-
-        if let Event::Key(key) = event::read()? {
-            if key.kind == KeyEventKind::Press {
-                match key.code {
-                    KeyCode::Char('q') => return Ok(()),
-                    KeyCode::Char('f') => app.show_popup = !app.show_popup,
-                    key if assert_next_tab(key) => app.next_tab(),
-                    key if assert_previous_tab(key) => app.previous_tab(),
-                    _ => {}
-                }
-            }
-        }
-    }
-}
-
-fn assert_next_tab(key: KeyCode) -> bool {
-    key == KeyCode::Right || key == KeyCode::Tab || key == KeyCode::Char('l')
-}
-
-fn assert_previous_tab(key: KeyCode) -> bool {
-    key == KeyCode::Left || key == KeyCode::BackTab || key == KeyCode::Char('h')
-}
-
-fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
+pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let size = f.size();
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -118,7 +70,7 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
     // content of the Main-Buffer
     match app.index {
         0 => draw_home(f, chunks[1], main_block),
-        1 => {} // TODO draw list from body entries
+        1 => draw_nyaa(f, chunks[1], main_block, app),
         2 => {} // TODO show downloads
         _ => unreachable!(),
     };
@@ -159,10 +111,7 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         .split(popup_layout[1])[1]
 }
 
-fn draw_home<B>(f: &mut Frame<B>, area: Rect, block: Block<'_>)
-where
-    B: Backend,
-{
+fn draw_home<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>) {
     let text = vec![
         text::Line::from(""),
         text::Line::from(""),
@@ -253,4 +202,28 @@ where
         .wrap(Wrap { trim: true })
         .alignment(Alignment::Center);
     f.render_widget(paragraph, area);
+}
+
+fn draw_nyaa<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>, app: &mut App) {
+    let entries: Vec<ListItem> = app
+        .entries
+        .items
+        .iter()
+        .map(|x| {
+            ListItem::new(vec![text::Line::from(vec![Span::raw(format!(
+                "[{}]:  {}",
+                x.size, x.name
+            ))])])
+        })
+        .collect();
+
+    let nyaa_entries = List::new(entries)
+        .block(block)
+        .highlight_style(
+            Style::default()
+                .add_modifier(Modifier::BOLD)
+                .add_modifier(Modifier::REVERSED),
+        )
+        .highlight_symbol("> ");
+    f.render_stateful_widget(nyaa_entries, area, &mut app.entries.state);
 }

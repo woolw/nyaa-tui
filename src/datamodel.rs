@@ -1,7 +1,4 @@
-use crate::{scraper::get_body, tui::ui};
-use crossterm::event::{self, *};
 use ratatui::{prelude::*, widgets::*};
-use std::io;
 use unhtml::FromHtml;
 
 //-----home------------------------------------------------------------------------------------------------------------------
@@ -14,7 +11,7 @@ pub struct ControllEntry {
 }
 
 impl ControllEntry {
-    fn get_controlls() -> Vec<ControllEntry> {
+    pub fn get_controlls() -> Vec<ControllEntry> {
         vec![
             ControllEntry {
                 title: String::from("Welcome to nyaa-tui:"),
@@ -59,6 +56,12 @@ impl ControllEntry {
                 text: String::from(" [ENTER], [SPACE_BAR]"),
             },
             ControllEntry {
+                title: String::from("load more entries:"),
+                modifier: Modifier::ITALIC,
+                color: Color::LightCyan,
+                text: String::from(" [p]"),
+            },
+            ControllEntry {
                 title: String::from("find:"),
                 modifier: Modifier::ITALIC,
                 color: Color::Rgb(0xff, 0x8c, 0x00),
@@ -74,36 +77,161 @@ impl ControllEntry {
     }
 }
 
-//-----nyaa--------------------------------------------------------------------------------------------------------------
+//-----find--------------------------------------------------------------------------------------------------------------
+
+pub struct Dropdown {
+    pub value: String,
+    pub label: String,
+}
+
+impl Dropdown {
+    pub fn get_filters() -> Vec<Dropdown> {
+        vec![
+            Dropdown {
+                value: String::from("0"),
+                label: String::from("No filter"),
+            },
+            Dropdown {
+                value: String::from("1"),
+                label: String::from("No remakes"),
+            },
+            Dropdown {
+                value: String::from("2"),
+                label: String::from("Trusted only"),
+            },
+        ]
+    }
+    pub fn get_categories() -> Vec<Dropdown> {
+        vec![
+            Dropdown {
+                value: String::from("0_0"),
+                label: String::from("All categories"),
+            },
+            Dropdown {
+                value: String::from("1_0"),
+                label: String::from("Anime"),
+            },
+            Dropdown {
+                value: String::from("1_1"),
+                label: String::from("Anime - AMV"),
+            },
+            Dropdown {
+                value: String::from("1_2"),
+                label: String::from("Anime - English"),
+            },
+            Dropdown {
+                value: String::from("1_3"),
+                label: String::from("Anime - Non-English"),
+            },
+            Dropdown {
+                value: String::from("1_4"),
+                label: String::from("Anime - Raw"),
+            },
+            Dropdown {
+                value: String::from("2_0"),
+                label: String::from("Audio"),
+            },
+            Dropdown {
+                value: String::from("2_1"),
+                label: String::from("Audio - Lossless"),
+            },
+            Dropdown {
+                value: String::from("2_2"),
+                label: String::from("Audio - Lossy"),
+            },
+            Dropdown {
+                value: String::from("3_0"),
+                label: String::from("Literature"),
+            },
+            Dropdown {
+                value: String::from("3_1"),
+                label: String::from("Literature - English"),
+            },
+            Dropdown {
+                value: String::from("3_2"),
+                label: String::from("Literature - Non-English"),
+            },
+            Dropdown {
+                value: String::from("3_3"),
+                label: String::from("Literature - Raw"),
+            },
+            Dropdown {
+                value: String::from("4_0"),
+                label: String::from("Live Action"),
+            },
+            Dropdown {
+                value: String::from("4_1"),
+                label: String::from("Live Action - English"),
+            },
+            Dropdown {
+                value: String::from("4_2"),
+                label: String::from("Live Action - Idol/PV"),
+            },
+            Dropdown {
+                value: String::from("4_3"),
+                label: String::from("Live Action - Non-English"),
+            },
+            Dropdown {
+                value: String::from("4_4"),
+                label: String::from("Live Action - Raw"),
+            },
+            Dropdown {
+                value: String::from("5_0"),
+                label: String::from("Pictures"),
+            },
+            Dropdown {
+                value: String::from("5_1"),
+                label: String::from("Pictures - Graphics"),
+            },
+            Dropdown {
+                value: String::from("5_2"),
+                label: String::from("Pictures - Photos"),
+            },
+            Dropdown {
+                value: String::from("6_0"),
+                label: String::from("Software"),
+            },
+            Dropdown {
+                value: String::from("6_1"),
+                label: String::from("Software - Apps"),
+            },
+            Dropdown {
+                value: String::from("6_2"),
+                label: String::from("Software - Games"),
+            },
+        ]
+    }
+}
 
 pub struct QueryParameters {
-    pub filter: Dropdown,
-    pub category: Dropdown,
+    pub filter: StatefulList<Dropdown>,
+    pub category: StatefulList<Dropdown>,
     pub search_query: String,
     pub page: u32,
 }
 
-#[derive(FromHtml, Debug)]
+impl QueryParameters {
+    pub fn new() -> QueryParameters {
+        QueryParameters {
+            filter: StatefulList::new_at_zero(Dropdown::get_filters()),
+            category: StatefulList::new_at_zero(Dropdown::get_categories()),
+            search_query: String::from(""),
+            page: 1,
+        }
+    }
+}
+
+//-----nyaa--------------------------------------------------------------------------------------------------------------
+
+#[derive(FromHtml)]
 pub struct Body {
-    #[html(selector = "select[name = f]:nth-child(1) > option")]
-    pub filter: Vec<Dropdown>,
-    #[html(selector = "select[name = c]:nth-child(1) > option")]
-    pub categories: Vec<Dropdown>,
     #[html(selector = ".default,.success,.danger")]
     pub entries: Vec<NyaaEntry>,
-    #[html(selector = ".pagination")]
-    pub page_info: PageInfo,
+    #[html(selector = ".pagination > li:last-child > a", attr = "href")]
+    pub next: Option<String>,
 }
 
-#[derive(FromHtml, Debug)]
-pub struct Dropdown {
-    #[html(attr = "value")]
-    pub value: String,
-    #[html(attr = "title")]
-    pub title: String,
-}
-
-#[derive(FromHtml, Debug, Clone)]
+#[derive(FromHtml, Clone)]
 pub struct NyaaEntry {
     #[html(selector = ".category-icon", attr = "alt")]
     pub category: String,
@@ -113,17 +241,13 @@ pub struct NyaaEntry {
     pub download_links: DownloadLinks,
     #[html(selector = "td:nth-child(4)", attr = "inner")]
     pub size: String,
-    #[html(selector = "td:nth-child(5)", attr = "inner")]
-    pub date: String,
     #[html(selector = "td:nth-child(6)", attr = "inner")]
     pub seeder: u32,
     #[html(selector = "td:nth-child(7)", attr = "inner")]
     pub leecher: u32,
-    #[html(selector = "td:nth-child(8)", attr = "inner")]
-    pub downloads: u32,
 }
 
-#[derive(FromHtml, Debug, Clone)]
+#[derive(FromHtml, Clone)]
 pub struct DownloadLinks {
     #[html(selector = "a:nth-child(1)", attr = "href")]
     pub torrent: String,
@@ -131,29 +255,24 @@ pub struct DownloadLinks {
     pub magnetic: String,
 }
 
-#[derive(FromHtml, Debug)]
-pub struct PageInfo {
-    #[html(selector = "li:first-child > a", attr = "href")]
-    pub previous: Option<String>,
-    // has to be string, since sometimes the inner includes "(current)" inside a nested span
-    #[html(selector = ".active > a", attr = "inner")]
-    pub active: String,
-    #[html(selector = "li:last-child > a", attr = "href")]
-    pub next: Option<String>,
-}
-
 //-----downloads------------------------------------------------------------------------------------------------------------------
 
+pub enum DownloadState {
+    Queued,
+    Downloading,
+    Finished,
+}
+
 pub struct DownloadEntry {
-    pub name: String,
-    pub download_links: DownloadLinks,
+    pub entry: NyaaEntry,
+    pub download_state: DownloadState,
 }
 
 impl DownloadEntry {
-    fn new(entry: NyaaEntry) -> DownloadEntry {
+    pub fn new(entry: NyaaEntry) -> DownloadEntry {
         DownloadEntry {
-            name: entry.name.clone(),
-            download_links: entry.download_links.clone(),
+            entry,
+            download_state: DownloadState::Queued,
         }
     }
 }
@@ -163,95 +282,11 @@ impl DownloadEntry {
 pub struct App<'a> {
     pub titles: Vec<&'a str>,
     pub index: usize,
-    pub show_popup: bool,
-    pub controll_entries: Vec<ControllEntry>,
+    pub params: QueryParameters,
+    pub popup_state: PopupStates,
     pub nyaa_entries: StatefulList<NyaaEntry>,
     pub download_entries: StatefulList<DownloadEntry>,
-    pub body: Body,
-}
-
-impl<'a> App<'a> {
-    pub async fn new() -> App<'a> {
-        let data = get_body(None).await;
-        App {
-            titles: vec!["home", "nyaa", "downloads"],
-            index: 0,
-            show_popup: false,
-            controll_entries: ControllEntry::get_controlls(),
-            nyaa_entries: StatefulList::with_items(data.entries.clone()),
-            download_entries: StatefulList::with_items(vec![]),
-            body: data,
-        }
-    }
-
-    pub async fn run<B: Backend>(mut self, terminal: &mut Terminal<B>) -> io::Result<()> {
-        loop {
-            terminal.draw(|f| ui(f, &mut self))?;
-
-            if let Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Press {
-                    match key.code {
-                        key if key == KeyCode::Left
-                            || key == KeyCode::BackTab
-                            || key == KeyCode::Char('h') =>
-                        {
-                            self.previous_tab()
-                        }
-                        key if key == KeyCode::Right
-                            || key == KeyCode::Tab
-                            || key == KeyCode::Char('l') =>
-                        {
-                            self.next_tab()
-                        }
-                        key if key == KeyCode::Up || key == KeyCode::Char('j') => {
-                            self.previous_entry()
-                        }
-                        key if key == KeyCode::Down || key == KeyCode::Char('k') => {
-                            self.next_entry()
-                        }
-                        key if key == KeyCode::Enter || key == KeyCode::Char(' ') => {
-                            self.previous_entry()
-                        }
-                        KeyCode::Char('f') => self.show_popup = !self.show_popup,
-                        KeyCode::Char('q') => return Ok(()),
-                        _ => {}
-                    }
-                }
-            }
-        }
-    }
-
-    pub fn next_tab(&mut self) {
-        self.index = (self.index + 1) % self.titles.len();
-    }
-
-    pub fn previous_tab(&mut self) {
-        if self.index > 0 {
-            self.index -= 1;
-        } else {
-            self.index = self.titles.len() - 1;
-        }
-    }
-
-    pub fn next_entry(&mut self) {
-        match self.index {
-            1 => self.nyaa_entries.next(),
-            2 => self.download_entries.next(),
-            _ => {}
-        }
-    }
-
-    pub fn previous_entry(&mut self) {
-        match self.index {
-            1 => self.nyaa_entries.previous(),
-            2 => self.download_entries.previous(),
-            _ => {}
-        }
-    }
-
-    pub fn add_download(&mut self, entry: NyaaEntry) {
-        self.download_entries.items.push(DownloadEntry::new(entry));
-    }
+    pub has_next: bool,
 }
 
 pub struct StatefulList<T> {
@@ -267,7 +302,23 @@ impl<T> StatefulList<T> {
         }
     }
 
+    pub fn new_at_zero(items: Vec<T>) -> StatefulList<T> {
+        let mut list = StatefulList {
+            state: ListState::default(),
+            items,
+        };
+
+        list.state.select(Some(0));
+
+        list
+    }
+
     pub fn next(&mut self) {
+        if self.items.len() <= 0 {
+            self.state = ListState::default();
+            return;
+        }
+
         let i = match self.state.selected() {
             Some(i) => {
                 if i >= self.items.len() - 1 {
@@ -282,6 +333,11 @@ impl<T> StatefulList<T> {
     }
 
     pub fn previous(&mut self) {
+        if self.items.len() <= 0 {
+            self.state = ListState::default();
+            return;
+        }
+
         let i = match self.state.selected() {
             Some(i) => {
                 if i == 0 {
@@ -294,4 +350,12 @@ impl<T> StatefulList<T> {
         };
         self.state.select(Some(i));
     }
+}
+
+pub enum PopupStates {
+    None,
+    Find,
+    AddDownload,
+    RemoveDownload,
+    NoneSelected,
 }

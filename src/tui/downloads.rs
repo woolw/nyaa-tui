@@ -1,4 +1,4 @@
-use crate::datamodel::App;
+use crate::datamodel::{App, DownloadState};
 use ratatui::{prelude::*, widgets::*};
 
 // tabs
@@ -11,14 +11,20 @@ pub fn draw_downloads<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>
         .items
         .iter()
         .map(|x| {
-            ListItem::new(vec![text::Line::from(vec![Span::raw(format!(
-                "{}",
-                x.name
-            ))])])
+            ListItem::new(text::Line::from(Span::styled(
+                format!("{}", x.entry.name),
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(match x.download_state {
+                        DownloadState::Queued => Color::White,
+                        DownloadState::Downloading => Color::LightBlue,
+                        DownloadState::Finished => Color::LightGreen,
+                    }),
+            )))
         })
         .collect();
 
-    let nyaa_entries = List::new(entries)
+    let download_entries = List::new(entries)
         .block(block)
         .highlight_style(
             Style::default()
@@ -26,7 +32,49 @@ pub fn draw_downloads<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>
                 .add_modifier(Modifier::REVERSED),
         )
         .highlight_symbol("> ");
-    f.render_stateful_widget(nyaa_entries, area, &mut app.nyaa_entries.state);
+    f.render_stateful_widget(download_entries, area, &mut app.download_entries.state);
+
+    match app.download_entries.state.selected() {
+        Some(pos) => {
+            let info = text::Line::from(vec![
+                Span::raw("["),
+                Span::styled(
+                    format!(" {} |", app.download_entries.items[pos].entry.category),
+                    Style::default().fg(Color::LightMagenta),
+                ),
+                Span::styled(
+                    format!(" size: {} |", app.download_entries.items[pos].entry.size),
+                    Style::default().fg(Color::LightBlue),
+                ),
+                match app.download_entries.items[pos].download_state {
+                    DownloadState::Queued => Span::styled(
+                        " Queued ",
+                        Style::default()
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    DownloadState::Downloading => Span::styled(
+                        " Queued ",
+                        Style::default()
+                            .fg(Color::LightBlue)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    DownloadState::Finished => Span::styled(
+                        " Finished ",
+                        Style::default()
+                            .fg(Color::LightGreen)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                },
+                Span::raw("]"),
+            ]);
+            let paragraph = Paragraph::new(info)
+                .alignment(Alignment::Center)
+                .wrap(Wrap { trim: true });
+            f.render_widget(paragraph, area);
+        }
+        None => {}
+    }
 }
 
 // fn draw_gauge<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>, app: &mut App) {
@@ -55,3 +103,37 @@ pub fn draw_downloads<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>
 //         .ratio(app.progress);
 //     f.render_widget(line_gauge, chunks[0]);
 // }
+
+pub fn draw_remove_download<B: Backend>(
+    f: &mut Frame<B>,
+    app: &mut App,
+    block: Block<'_>,
+    area: Rect,
+) {
+    // we can use unwrap here, bcs we matched at an earlier step
+    let pos = app.download_entries.state.selected().unwrap();
+
+    let info = vec![
+        text::Line::from(""),
+        text::Line::from(vec![
+            Span::raw("Do you want to remove "),
+            Span::styled(
+                format!("{}", app.download_entries.items[pos].entry.name),
+                Style::default().fg(Color::LightBlue),
+            ),
+            Span::raw(" from the download queue?"),
+        ]),
+        text::Line::from(""),
+        text::Line::from(vec![
+            Span::styled("[y]     ", Style::default().fg(Color::Red)),
+            Span::styled("     [n]", Style::default().fg(Color::Green)),
+        ]),
+    ];
+    let paragraph = Paragraph::new(info)
+        .block(block)
+        .alignment(Alignment::Center)
+        .wrap(Wrap { trim: true });
+
+    f.render_widget(Clear, area); //this clears out the background
+    f.render_widget(paragraph, area);
+}

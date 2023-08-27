@@ -5,7 +5,7 @@ use unhtml::FromHtml;
 
 const BASE_URL: &str = "https://nyaa.si/?s=seeders&o=desc";
 
-pub async fn get_body(params: Option<QueryParameters>) -> Body {
+pub async fn get_body(params: &QueryParameters) -> Body {
     let html = get_response(params).await;
 
     let t_body = Body::from_html(&html);
@@ -16,21 +16,19 @@ pub async fn get_body(params: Option<QueryParameters>) -> Body {
     }
 }
 
-async fn get_response(params: Option<QueryParameters>) -> String {
+async fn get_response(params: &QueryParameters) -> String {
     let mut query_url = BASE_URL.to_string();
 
-    match params {
-        Some(ps) => {
-            query_url.push_str(
-                format!(
-                    "&f={}&c={}&q={}&p={}",
-                    ps.filter.value, ps.category.value, ps.search_query, ps.page
-                )
-                .as_str(),
-            );
-        }
-        None => {}
-    }
+    query_url.push_str(
+        format!(
+            "&f={}&c={}&q={}&p={}",
+            params.filter.items[params.filter.state.selected().unwrap()].value,
+            params.category.items[params.category.state.selected().unwrap()].value,
+            params.search_query,
+            params.page
+        )
+        .as_str(),
+    );
 
     let retry_policy = ExponentialBackoff::builder().build_with_max_retries(3);
     let client = ClientBuilder::new(reqwest::Client::new())

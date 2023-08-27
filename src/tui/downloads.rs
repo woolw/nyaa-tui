@@ -12,7 +12,7 @@ pub fn draw_downloads<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>
         .iter()
         .map(|x| {
             ListItem::new(text::Line::from(Span::styled(
-                format!("{}", x.name),
+                format!("{}", x.entry.name),
                 Style::default()
                     .add_modifier(Modifier::BOLD)
                     .fg(match x.download_state {
@@ -39,7 +39,11 @@ pub fn draw_downloads<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>
             let info = text::Line::from(vec![
                 Span::raw("["),
                 Span::styled(
-                    format!(" size: {:?} |", app.download_entries.items[pos].size),
+                    format!(" {} |", app.download_entries.items[pos].entry.category),
+                    Style::default().fg(Color::LightMagenta),
+                ),
+                Span::styled(
+                    format!(" size: {} |", app.download_entries.items[pos].entry.size),
                     Style::default().fg(Color::LightBlue),
                 ),
                 match app.download_entries.items[pos].download_state {
@@ -99,3 +103,37 @@ pub fn draw_downloads<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>
 //         .ratio(app.progress);
 //     f.render_widget(line_gauge, chunks[0]);
 // }
+
+pub fn draw_remove_download<B: Backend>(
+    f: &mut Frame<B>,
+    app: &mut App,
+    block: Block<'_>,
+    area: Rect,
+) {
+    // we can use unwrap here, bcs we matched at an earlier step
+    let pos = app.download_entries.state.selected().unwrap();
+
+    let info = vec![
+        text::Line::from(""),
+        text::Line::from(vec![
+            Span::raw("Do you want to remove "),
+            Span::styled(
+                format!("{}", app.download_entries.items[pos].entry.name),
+                Style::default().fg(Color::LightBlue),
+            ),
+            Span::raw(" from the download queue?"),
+        ]),
+        text::Line::from(""),
+        text::Line::from(vec![
+            Span::styled("[y]     ", Style::default().fg(Color::Red)),
+            Span::styled("     [n]", Style::default().fg(Color::Green)),
+        ]),
+    ];
+    let paragraph = Paragraph::new(info)
+        .block(block)
+        .alignment(Alignment::Center)
+        .wrap(Wrap { trim: true });
+
+    f.render_widget(Clear, area); //this clears out the background
+    f.render_widget(paragraph, area);
+}

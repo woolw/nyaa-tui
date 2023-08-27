@@ -8,6 +8,7 @@ use crossterm::{
 use datamodel::App;
 use ratatui::{prelude::CrosstermBackend, Terminal};
 
+pub mod app;
 pub mod datamodel;
 pub mod scraper;
 pub mod tui;

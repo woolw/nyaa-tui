@@ -1,10 +1,80 @@
-use crate::{nyaa_scraper::get_body, tui::ui};
-use crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use ratatui::{prelude::Backend, widgets::ListState, Terminal};
+use crate::{scraper::get_body, tui::ui};
+use crossterm::event::{self, *};
+use ratatui::{prelude::*, widgets::*};
 use std::io;
 use unhtml::FromHtml;
 
-//-----scraper--------------------------------------------------------------------------------------------------------------
+//-----home------------------------------------------------------------------------------------------------------------------
+
+pub struct ControllEntry {
+    pub title: String,
+    pub modifier: Modifier,
+    pub color: Color,
+    pub text: String,
+}
+
+impl ControllEntry {
+    fn get_controlls() -> Vec<ControllEntry> {
+        vec![
+            ControllEntry {
+                title: String::from("Welcome to nyaa-tui:"),
+                modifier: Modifier::BOLD,
+                color: Color::Reset,
+                text: String::from(""),
+            },
+            ControllEntry {
+                title: String::from("Controlls:"),
+                modifier: Modifier::BOLD,
+                color: Color::Reset,
+                text: String::from(""),
+            },
+            ControllEntry {
+                title: String::from("left:"),
+                modifier: Modifier::ITALIC,
+                color: Color::Blue,
+                text: String::from(" [h], [BACK_TAB], [LEFT_ARROW_KEY]"),
+            },
+            ControllEntry {
+                title: String::from("right:"),
+                modifier: Modifier::ITALIC,
+                color: Color::Red,
+                text: String::from(" [l], [TAB], [RIGHT_ARROW_KEY]"),
+            },
+            ControllEntry {
+                title: String::from("up:"),
+                modifier: Modifier::ITALIC,
+                color: Color::Yellow,
+                text: String::from(" [j], [UP_ARROW_KEY]"),
+            },
+            ControllEntry {
+                title: String::from("down:"),
+                modifier: Modifier::ITALIC,
+                color: Color::Green,
+                text: String::from(" [k], [DOWN_ARROW_KEY]"),
+            },
+            ControllEntry {
+                title: String::from("select:"),
+                modifier: Modifier::ITALIC,
+                color: Color::Magenta,
+                text: String::from(" [ENTER], [SPACE_BAR]"),
+            },
+            ControllEntry {
+                title: String::from("find:"),
+                modifier: Modifier::ITALIC,
+                color: Color::Rgb(0xff, 0x8c, 0x00),
+                text: String::from(" [f]"),
+            },
+            ControllEntry {
+                title: String::from("exit:"),
+                modifier: Modifier::ITALIC,
+                color: Color::White,
+                text: String::from(" [q]"),
+            },
+        ]
+    }
+}
+
+//-----nyaa--------------------------------------------------------------------------------------------------------------
 
 pub struct QueryParameters {
     pub filter: Dropdown,
@@ -19,8 +89,8 @@ pub struct Body {
     pub filter: Vec<Dropdown>,
     #[html(selector = "select[name = c]:nth-child(1) > option")]
     pub categories: Vec<Dropdown>,
-    #[html(selector = ".default")]
-    pub entries: Vec<ListEntry>,
+    #[html(selector = ".default,.success,.danger")]
+    pub entries: Vec<NyaaEntry>,
     #[html(selector = ".pagination")]
     pub page_info: PageInfo,
 }
@@ -34,10 +104,10 @@ pub struct Dropdown {
 }
 
 #[derive(FromHtml, Debug, Clone)]
-pub struct ListEntry {
+pub struct NyaaEntry {
     #[html(selector = ".category-icon", attr = "alt")]
     pub category: String,
-    #[html(selector = "td:nth-child(2)", attr = "inner")]
+    #[html(selector = "td:nth-child(2) > a:last-of-type", attr = "inner")]
     pub name: String,
     #[html(selector = "td:nth-child(3)")]
     pub download_links: DownloadLinks,
@@ -72,13 +142,31 @@ pub struct PageInfo {
     pub next: Option<String>,
 }
 
+//-----downloads------------------------------------------------------------------------------------------------------------------
+
+pub struct DownloadEntry {
+    pub name: String,
+    pub download_links: DownloadLinks,
+}
+
+impl DownloadEntry {
+    fn new(entry: NyaaEntry) -> DownloadEntry {
+        DownloadEntry {
+            name: entry.name.clone(),
+            download_links: entry.download_links.clone(),
+        }
+    }
+}
+
 //-----tui------------------------------------------------------------------------------------------------------------------
 
 pub struct App<'a> {
     pub titles: Vec<&'a str>,
     pub index: usize,
     pub show_popup: bool,
-    pub entries: StatefulList<ListEntry>,
+    pub controll_entries: Vec<ControllEntry>,
+    pub nyaa_entries: StatefulList<NyaaEntry>,
+    pub download_entries: StatefulList<DownloadEntry>,
     pub body: Body,
 }
 
@@ -89,7 +177,9 @@ impl<'a> App<'a> {
             titles: vec!["home", "nyaa", "downloads"],
             index: 0,
             show_popup: false,
-            entries: StatefulList::with_items(data.entries.clone()),
+            controll_entries: ControllEntry::get_controlls(),
+            nyaa_entries: StatefulList::with_items(data.entries.clone()),
+            download_entries: StatefulList::with_items(vec![]),
             body: data,
         }
     }
@@ -101,26 +191,29 @@ impl<'a> App<'a> {
             if let Event::Key(key) = event::read()? {
                 if key.kind == KeyEventKind::Press {
                     match key.code {
-                        KeyCode::Char('q') => return Ok(()),
-                        KeyCode::Char('f') => self.show_popup = !self.show_popup,
-                        key if key == KeyCode::Right
-                            || key == KeyCode::Tab
-                            || key == KeyCode::Char('l') =>
-                        {
-                            self.next_tab()
-                        }
                         key if key == KeyCode::Left
                             || key == KeyCode::BackTab
                             || key == KeyCode::Char('h') =>
                         {
                             self.previous_tab()
                         }
-                        key if key == KeyCode::Down || key == KeyCode::Char('k') => {
-                            self.next_entry()
+                        key if key == KeyCode::Right
+                            || key == KeyCode::Tab
+                            || key == KeyCode::Char('l') =>
+                        {
+                            self.next_tab()
                         }
                         key if key == KeyCode::Up || key == KeyCode::Char('j') => {
                             self.previous_entry()
                         }
+                        key if key == KeyCode::Down || key == KeyCode::Char('k') => {
+                            self.next_entry()
+                        }
+                        key if key == KeyCode::Enter || key == KeyCode::Char(' ') => {
+                            self.previous_entry()
+                        }
+                        KeyCode::Char('f') => self.show_popup = !self.show_popup,
+                        KeyCode::Char('q') => return Ok(()),
                         _ => {}
                     }
                 }
@@ -141,11 +234,23 @@ impl<'a> App<'a> {
     }
 
     pub fn next_entry(&mut self) {
-        self.entries.next()
+        match self.index {
+            1 => self.nyaa_entries.next(),
+            2 => self.download_entries.next(),
+            _ => {}
+        }
     }
 
     pub fn previous_entry(&mut self) {
-        self.entries.previous()
+        match self.index {
+            1 => self.nyaa_entries.previous(),
+            2 => self.download_entries.previous(),
+            _ => {}
+        }
+    }
+
+    pub fn add_download(&mut self, entry: NyaaEntry) {
+        self.download_entries.items.push(DownloadEntry::new(entry));
     }
 }
 

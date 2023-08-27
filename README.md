@@ -1,13 +1,21 @@
 # nyaa-tui
 
-small project to learn rust, reqwest, tokio
+small project to play around with rust
 
 currently still very much so WIP
+
+## Notes
+
+- all popups will be blocking. you can't switch tabs until you closed a popup
+- nyaa_entries are sorted by seeders
+- downloads follow the first-in-first-out methodology
+
 
 ### Current Features:
 
 - Fetch and extract data from nyaa.si
-- print the data to console
+- output the list of fetched entries
+</br></br>  
 
 # Setup
 
@@ -31,12 +39,13 @@ none so far
 
 # Crates used
 
-- unhtml ([crates.io](https://crates.io/crates/unhtml) | [github](https://github.com/Hexilee/unhtml.rs))
-- tokio ([crates.io](https://crates.io/crates/tokio) | [github](https://github.com/tokio-rs/tokio))
+- crossterm ([crates.io](https://crates.io/crates/crossterm) | [github](https://github.com/crossterm-rs/crossterm))
+- ratatui ([crates.io](https://crates.io/crates/ratatui) | [github](https://github.com/ratatui-org/ratatui))
 - reqwest ([crates.io](https://crates.io/crates/reqwest) | [github](https://github.com/seanmonstar/reqwest))
 - reqwest-retry ([crates.io](https://crates.io/crates/reqwest-retry) | [github](https://github.com/TrueLayer/reqwest-middleware))
 - reqwest-middleware ([crates.io](https://crates.io/crates/reqwest-middleware) | [github](https://github.com/TrueLayer/reqwest-middleware))
-- tui ([crates.io](https://crates.io/crates/tui) | [github](https://github.com/fdehau/tui-rs))
+- tokio ([crates.io](https://crates.io/crates/tokio) | [github](https://github.com/tokio-rs/tokio))
+- unhtml ([crates.io](https://crates.io/crates/unhtml) | [github](https://github.com/Hexilee/unhtml.rs))
 
 # Dependencies
 

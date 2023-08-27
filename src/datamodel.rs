@@ -83,7 +83,7 @@ pub struct QueryParameters {
     pub page: u32,
 }
 
-#[derive(FromHtml, Debug)]
+#[derive(FromHtml)]
 pub struct Body {
     #[html(selector = "select[name = f]:nth-child(1) > option")]
     pub filter: Vec<Dropdown>,
@@ -95,7 +95,7 @@ pub struct Body {
     pub page_info: PageInfo,
 }
 
-#[derive(FromHtml, Debug)]
+#[derive(FromHtml)]
 pub struct Dropdown {
     #[html(attr = "value")]
     pub value: String,
@@ -103,7 +103,7 @@ pub struct Dropdown {
     pub title: String,
 }
 
-#[derive(FromHtml, Debug, Clone)]
+#[derive(FromHtml, Clone)]
 pub struct NyaaEntry {
     #[html(selector = ".category-icon", attr = "alt")]
     pub category: String,
@@ -113,17 +113,13 @@ pub struct NyaaEntry {
     pub download_links: DownloadLinks,
     #[html(selector = "td:nth-child(4)", attr = "inner")]
     pub size: String,
-    #[html(selector = "td:nth-child(5)", attr = "inner")]
-    pub date: String,
     #[html(selector = "td:nth-child(6)", attr = "inner")]
     pub seeder: u32,
     #[html(selector = "td:nth-child(7)", attr = "inner")]
     pub leecher: u32,
-    #[html(selector = "td:nth-child(8)", attr = "inner")]
-    pub downloads: u32,
 }
 
-#[derive(FromHtml, Debug, Clone)]
+#[derive(FromHtml, Clone)]
 pub struct DownloadLinks {
     #[html(selector = "a:nth-child(1)", attr = "href")]
     pub torrent: String,
@@ -131,7 +127,7 @@ pub struct DownloadLinks {
     pub magnetic: String,
 }
 
-#[derive(FromHtml, Debug)]
+#[derive(FromHtml)]
 pub struct PageInfo {
     #[html(selector = "li:first-child > a", attr = "href")]
     pub previous: Option<String>,
@@ -144,16 +140,26 @@ pub struct PageInfo {
 
 //-----downloads------------------------------------------------------------------------------------------------------------------
 
+pub enum DownloadState {
+    Queued,
+    Downloading,
+    Finished,
+}
+
 pub struct DownloadEntry {
     pub name: String,
+    pub size: String,
     pub download_links: DownloadLinks,
+    pub download_state: DownloadState,
 }
 
 impl DownloadEntry {
     fn new(entry: NyaaEntry) -> DownloadEntry {
         DownloadEntry {
-            name: entry.name.clone(),
-            download_links: entry.download_links.clone(),
+            name: entry.name,
+            size: entry.size,
+            download_links: entry.download_links,
+            download_state: DownloadState::Queued,
         }
     }
 }
@@ -216,35 +222,53 @@ impl<'a> App<'a> {
                             self.next_entry()
                         }
                         key if (key == KeyCode::Enter || key == KeyCode::Char(' '))
-                            && self.index == 1
                             && matches!(self.popup, Popups::None) =>
                         {
-                            self.popup = Popups::AddDownload
-                        }
-                        key if (key == KeyCode::Enter || key == KeyCode::Char(' '))
-                            && self.index == 2
-                            && matches!(self.popup, Popups::None) =>
-                        {
-                            self.popup = Popups::RemoveDownload
+                            match self.index {
+                                1 => match self.nyaa_entries.state.selected() {
+                                    Some(_) => self.popup = Popups::AddDownload,
+                                    None => self.popup = Popups::NoneSelected,
+                                },
+                                2 => match self.download_entries.state.selected() {
+                                    Some(_) => self.popup = Popups::RemoveDownload,
+                                    None => self.popup = Popups::NoneSelected,
+                                },
+                                _ => {}
+                            }
                         }
                         key if key == KeyCode::Char('f') && matches!(self.popup, Popups::None) => {
                             self.popup = Popups::Find
                         }
                         key if key == KeyCode::Char('q') => match self.popup {
                             Popups::None => return Ok(()),
-                            _ => self.popup = Popups::None,
+                            Popups::NoneSelected => self.popup = Popups::None,
+                            _ => {}
                         },
                         key if key == KeyCode::Char('y') => match self.popup {
                             Popups::AddDownload => match self.nyaa_entries.state.selected() {
                                 Some(pos) => {
                                     self.add_download(self.nyaa_entries.items[pos].clone());
                                     self.popup = Popups::None;
-                                    self.index = 2
                                 }
                                 None => {}
                             },
+                            Popups::RemoveDownload => {
+                                match self.download_entries.state.selected() {
+                                    Some(pos) => {
+                                        self.remove_download(pos);
+                                        self.popup = Popups::None;
+                                    }
+                                    None => {}
+                                }
+                            }
                             _ => {}
                         },
+                        key if key == KeyCode::Char('n')
+                            && matches!(self.popup, Popups::AddDownload)
+                            || matches!(self.popup, Popups::RemoveDownload) =>
+                        {
+                            self.popup = Popups::None
+                        }
                         _ => {}
                     }
                 }
@@ -281,7 +305,16 @@ impl<'a> App<'a> {
     }
 
     pub fn add_download(&mut self, entry: NyaaEntry) {
-        self.download_entries.items.push(DownloadEntry::new(entry));
+        if !self.download_entries.items.iter().any(|x| {
+            x.download_links.magnetic == entry.download_links.magnetic
+                || x.download_links.torrent == entry.download_links.torrent
+        }) {
+            self.download_entries.items.push(DownloadEntry::new(entry));
+        }
+    }
+
+    pub fn remove_download(&mut self, pos: usize) {
+        let _ = self.download_entries.items.remove(pos);
     }
 }
 
@@ -332,4 +365,5 @@ pub enum Popups {
     Find,
     AddDownload,
     RemoveDownload,
+    NoneSelected,
 }

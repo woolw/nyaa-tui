@@ -1,4 +1,4 @@
-use crate::datamodel::App;
+use crate::datamodel::{App, DownloadState};
 use ratatui::{prelude::*, widgets::*};
 
 // tabs
@@ -11,10 +11,16 @@ pub fn draw_downloads<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>
         .items
         .iter()
         .map(|x| {
-            ListItem::new(vec![text::Line::from(vec![Span::raw(format!(
-                "{}",
-                x.name
-            ))])])
+            ListItem::new(text::Line::from(Span::styled(
+                format!("{}", x.name),
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(match x.download_state {
+                        DownloadState::Queued => Color::White,
+                        DownloadState::Downloading => Color::LightBlue,
+                        DownloadState::Finished => Color::LightGreen,
+                    }),
+            )))
         })
         .collect();
 
@@ -27,6 +33,44 @@ pub fn draw_downloads<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>
         )
         .highlight_symbol("> ");
     f.render_stateful_widget(download_entries, area, &mut app.download_entries.state);
+
+    match app.download_entries.state.selected() {
+        Some(pos) => {
+            let info = text::Line::from(vec![
+                Span::raw("["),
+                Span::styled(
+                    format!(" size: {:?} |", app.download_entries.items[pos].size),
+                    Style::default().fg(Color::LightBlue),
+                ),
+                match app.download_entries.items[pos].download_state {
+                    DownloadState::Queued => Span::styled(
+                        " Queued ",
+                        Style::default()
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    DownloadState::Downloading => Span::styled(
+                        " Queued ",
+                        Style::default()
+                            .fg(Color::LightBlue)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    DownloadState::Finished => Span::styled(
+                        " Finished ",
+                        Style::default()
+                            .fg(Color::LightGreen)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                },
+                Span::raw("]"),
+            ]);
+            let paragraph = Paragraph::new(info)
+                .alignment(Alignment::Center)
+                .wrap(Wrap { trim: true });
+            f.render_widget(paragraph, area);
+        }
+        None => {}
+    }
 }
 
 // fn draw_gauge<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>, app: &mut App) {

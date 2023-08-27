@@ -35,7 +35,7 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 
     // content of the Main-Buffer
     match app.index {
-        0 => draw_home(f, chunks[1], block.clone(), app),
+        0 => draw_home(f, chunks[1], block.clone()),
         1 => draw_nyaa(f, chunks[1], block.clone(), app),
         2 => draw_downloads(f, chunks[1], block.clone(), app),
         _ => unreachable!(),

@@ -1,7 +1,7 @@
 use std::io;
 
 pub mod datamodel;
-pub mod nyaa_scraper;
+pub mod scraper;
 pub mod tui;
 
 #[tokio::main]

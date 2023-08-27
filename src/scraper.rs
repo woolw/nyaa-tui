@@ -3,12 +3,12 @@ use reqwest_middleware::ClientBuilder;
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use unhtml::FromHtml;
 
-const BASE_URL: &str = "https://nyaa.si/";
+const BASE_URL: &str = "https://nyaa.si/?s=seeders&o=desc";
 
 pub async fn get_body(params: Option<QueryParameters>) -> Body {
     let html = get_response(params).await;
 
-    let t_body = Body::from_html(&html.unwrap_or("".to_string()));
+    let t_body = Body::from_html(&html);
 
     match t_body {
         Ok(res) => res,
@@ -16,14 +16,14 @@ pub async fn get_body(params: Option<QueryParameters>) -> Body {
     }
 }
 
-pub async fn get_response(params: Option<QueryParameters>) -> Result<String, &'static str> {
+async fn get_response(params: Option<QueryParameters>) -> String {
     let mut query_url = BASE_URL.to_string();
 
     match params {
         Some(ps) => {
             query_url.push_str(
                 format!(
-                    "?f={}&c={}&q={}&p={}",
+                    "&f={}&c={}&q={}&p={}",
                     ps.filter.value, ps.category.value, ps.search_query, ps.page
                 )
                 .as_str(),
@@ -49,5 +49,5 @@ pub async fn get_response(params: Option<QueryParameters>) -> Result<String, &'s
         }
     };
 
-    Ok(html)
+    html
 }

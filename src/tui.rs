@@ -1,12 +1,12 @@
 use self::{downloads::draw_downloads, home::draw_home, nyaa::draw_nyaa};
-use crate::datamodel::App;
+use crate::datamodel::{App, Popups};
 use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture},
+    event::*,
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{prelude::*, widgets::*};
-use std::io;
+use std::io::{self};
 
 mod downloads;
 mod home;
@@ -81,16 +81,16 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     };
 
     // search popup
-    if app.show_popup {
-        let block = Block::default().title("search nyaa").borders(Borders::ALL);
-        let area = centered_rect(50, 40, size);
-        f.render_widget(Clear, area); //this clears out the background
-        f.render_widget(block, area);
+    match app.popup {
+        Popups::Find => todo!(),
+        Popups::AddDownload => draw_select_for_download(f, app),
+        Popups::RemoveDownload => todo!(),
+        Popups::None => {}
     }
 }
 
 /// helper function to create a centered rect using up certain percentage of the available rect `r`
-fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
     let popup_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints(
@@ -114,4 +114,57 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
             .as_ref(),
         )
         .split(popup_layout[1])[1]
+}
+
+//-----Popups----------------------------------------------------------------------------------------------------------------------------------------------------
+
+pub fn draw_select_for_download<B: Backend>(f: &mut Frame<B>, app: &mut App) {
+    let block = Block::default().borders(Borders::ALL);
+    let area = centered_rect(50, 35, f.size());
+    f.render_widget(Clear, area); //this clears out the background
+    f.render_widget(block.clone(), area);
+
+    match app.nyaa_entries.state.selected() {
+        Some(pos) => {
+            let info = vec![
+                text::Line::from(""),
+                text::Line::from(vec![
+                    Span::raw("Do you want to download "),
+                    Span::styled(
+                        format!("{:?}", app.nyaa_entries.items[pos].name),
+                        Style::default().fg(Color::LightBlue),
+                    ),
+                    Span::raw("?"),
+                ]),
+                text::Line::from(""),
+                text::Line::from(vec![
+                    Span::styled("[y]     ", Style::default().fg(Color::Green)),
+                    Span::styled("     [n]", Style::default().fg(Color::Red)),
+                ]),
+            ];
+            let paragraph = Paragraph::new(info)
+                .block(block)
+                .alignment(Alignment::Center)
+                .wrap(Wrap { trim: true });
+            f.render_widget(paragraph, area);
+        }
+        None => {
+            let _ = none_selected_popup(f, block, area);
+        }
+    };
+}
+
+pub fn none_selected_popup<B: Backend>(f: &mut Frame<B>, block: Block<'_>, area: Rect) {
+    let info = vec![
+        text::Line::from(Span::raw(
+            "you must first select something to for this action.",
+        )),
+        text::Line::from(Span::raw("")),
+        text::Line::from(Span::raw("press q to exit this prompt.")),
+    ];
+    let paragraph = Paragraph::new(info)
+        .block(block)
+        .alignment(Alignment::Center)
+        .wrap(Wrap { trim: true });
+    f.render_widget(paragraph, area);
 }

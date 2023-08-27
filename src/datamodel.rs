@@ -163,7 +163,7 @@ impl DownloadEntry {
 pub struct App<'a> {
     pub titles: Vec<&'a str>,
     pub index: usize,
-    pub show_popup: bool,
+    pub popup: Popups,
     pub controll_entries: Vec<ControllEntry>,
     pub nyaa_entries: StatefulList<NyaaEntry>,
     pub download_entries: StatefulList<DownloadEntry>,
@@ -176,7 +176,7 @@ impl<'a> App<'a> {
         App {
             titles: vec!["home", "nyaa", "downloads"],
             index: 0,
-            show_popup: false,
+            popup: Popups::None,
             controll_entries: ControllEntry::get_controlls(),
             nyaa_entries: StatefulList::with_items(data.entries.clone()),
             download_entries: StatefulList::with_items(vec![]),
@@ -191,29 +191,60 @@ impl<'a> App<'a> {
             if let Event::Key(key) = event::read()? {
                 if key.kind == KeyEventKind::Press {
                     match key.code {
-                        key if key == KeyCode::Left
+                        key if (key == KeyCode::Left
                             || key == KeyCode::BackTab
-                            || key == KeyCode::Char('h') =>
+                            || key == KeyCode::Char('h'))
+                            && matches!(self.popup, Popups::None) =>
                         {
                             self.previous_tab()
                         }
-                        key if key == KeyCode::Right
+                        key if (key == KeyCode::Right
                             || key == KeyCode::Tab
-                            || key == KeyCode::Char('l') =>
+                            || key == KeyCode::Char('l'))
+                            && matches!(self.popup, Popups::None) =>
                         {
                             self.next_tab()
                         }
-                        key if key == KeyCode::Up || key == KeyCode::Char('j') => {
+                        key if (key == KeyCode::Up || key == KeyCode::Char('j'))
+                            && matches!(self.popup, Popups::None) =>
+                        {
                             self.previous_entry()
                         }
-                        key if key == KeyCode::Down || key == KeyCode::Char('k') => {
+                        key if (key == KeyCode::Down || key == KeyCode::Char('k'))
+                            && matches!(self.popup, Popups::None) =>
+                        {
                             self.next_entry()
                         }
-                        key if key == KeyCode::Enter || key == KeyCode::Char(' ') => {
-                            self.previous_entry()
+                        key if (key == KeyCode::Enter || key == KeyCode::Char(' '))
+                            && self.index == 1
+                            && matches!(self.popup, Popups::None) =>
+                        {
+                            self.popup = Popups::AddDownload
                         }
-                        KeyCode::Char('f') => self.show_popup = !self.show_popup,
-                        KeyCode::Char('q') => return Ok(()),
+                        key if (key == KeyCode::Enter || key == KeyCode::Char(' '))
+                            && self.index == 2
+                            && matches!(self.popup, Popups::None) =>
+                        {
+                            self.popup = Popups::RemoveDownload
+                        }
+                        key if key == KeyCode::Char('f') && matches!(self.popup, Popups::None) => {
+                            self.popup = Popups::Find
+                        }
+                        key if key == KeyCode::Char('q') => match self.popup {
+                            Popups::None => return Ok(()),
+                            _ => self.popup = Popups::None,
+                        },
+                        key if key == KeyCode::Char('y') => match self.popup {
+                            Popups::AddDownload => match self.nyaa_entries.state.selected() {
+                                Some(pos) => {
+                                    self.add_download(self.nyaa_entries.items[pos].clone());
+                                    self.popup = Popups::None;
+                                    self.index = 2
+                                }
+                                None => {}
+                            },
+                            _ => {}
+                        },
                         _ => {}
                     }
                 }
@@ -294,4 +325,11 @@ impl<T> StatefulList<T> {
         };
         self.state.select(Some(i));
     }
+}
+
+pub enum Popups {
+    None,
+    Find,
+    AddDownload,
+    RemoveDownload,
 }

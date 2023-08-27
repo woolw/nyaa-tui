@@ -18,7 +18,7 @@ pub fn draw_downloads<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>
         })
         .collect();
 
-    let nyaa_entries = List::new(entries)
+    let download_entries = List::new(entries)
         .block(block)
         .highlight_style(
             Style::default()
@@ -26,7 +26,7 @@ pub fn draw_downloads<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>
                 .add_modifier(Modifier::REVERSED),
         )
         .highlight_symbol("> ");
-    f.render_stateful_widget(nyaa_entries, area, &mut app.nyaa_entries.state);
+    f.render_stateful_widget(download_entries, area, &mut app.download_entries.state);
 }
 
 // fn draw_gauge<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>, app: &mut App) {

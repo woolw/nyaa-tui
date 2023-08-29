@@ -4,7 +4,7 @@ use crate::{
     tui::ui,
 };
 use crossterm::event::{self, *};
-use ratatui::prelude::*;
+use ratatui::{prelude::*, widgets::ListState};
 use std::io;
 
 impl<'a> App<'a> {
@@ -52,20 +52,36 @@ impl<'a> App<'a> {
                             key if (key == KeyCode::Enter || key == KeyCode::Char(' ')) => {
                                 self.select_entry()
                             }
-                            KeyCode::Char('p') => self.load_next_page().await,
+                            KeyCode::Char('p') => self.append_next_page().await,
                             KeyCode::Char('f') => self.popup_state = PopupStates::Find,
                             KeyCode::Char('q') => return Ok(()),
                             _ => {}
                         },
-                        PopupStates::Find => match key.code {
-                            KeyCode::Char('f') => todo!(),
-                            KeyCode::Char('c') => todo!(),
-                            KeyCode::Char('s') => todo!(),
-                            key if (key == KeyCode::Enter || key == KeyCode::Char(' ')) => {
-                                todo!()
-                            }
-                            KeyCode::Char('q') => self.popup_state = PopupStates::None,
-                            _ => {}
+                        PopupStates::Find => match self.params.search_query.is_insert_mode {
+                            true => match key.code {
+                                KeyCode::Char(to_insert) => self.enter_char(to_insert),
+                                KeyCode::Backspace => self.delete_char_left(),
+                                KeyCode::Delete => self.delete_char_right(),
+                                KeyCode::Left => self.move_cursor_left(),
+                                KeyCode::Right => self.move_cursor_right(),
+                                KeyCode::Esc => {
+                                    self.params.search_query.is_insert_mode = false;
+                                }
+                                _ => {}
+                            },
+                            false => match key.code {
+                                KeyCode::Char('f') => self.params.filter.next(),
+                                KeyCode::Char('c') => self.params.category.next(),
+                                KeyCode::Char('i') => {
+                                    self.params.search_query.is_insert_mode = true
+                                }
+                                key if (key == KeyCode::Enter || key == KeyCode::Char(' ')) => {
+                                    self.reload().await;
+                                    self.popup_state = PopupStates::None
+                                }
+                                KeyCode::Char('q') => self.popup_state = PopupStates::None,
+                                _ => {}
+                            },
                         },
                         PopupStates::AddDownload => match key.code {
                             KeyCode::Char('y') => match self.nyaa_entries.state.selected() {
@@ -141,7 +157,17 @@ impl<'a> App<'a> {
         }
     }
 
-    async fn load_next_page(&mut self) {
+    async fn reload(&mut self) {
+        self.params.page = 1;
+        let new_page = get_body(&self.params).await;
+        self.has_next = new_page.next.is_some();
+        self.nyaa_entries.items = new_page.entries;
+        self.nyaa_entries.state = ListState::default();
+
+        self.index = 1
+    }
+
+    async fn append_next_page(&mut self) {
         match self.index {
             1 => {
                 if self.has_next {
@@ -167,5 +193,85 @@ impl<'a> App<'a> {
     fn remove_download(&mut self, pos: usize) {
         let _ = self.download_entries.items.remove(pos);
         self.download_entries.next();
+    }
+
+    fn move_cursor_left(&mut self) {
+        let cursor_moved_left = self.params.search_query.cursor_pos.saturating_sub(1);
+        self.params.search_query.cursor_pos = self.clamp_cursor(cursor_moved_left);
+    }
+
+    fn move_cursor_right(&mut self) {
+        let cursor_moved_right = self.params.search_query.cursor_pos.saturating_add(1);
+        self.params.search_query.cursor_pos = self.clamp_cursor(cursor_moved_right);
+    }
+
+    fn enter_char(&mut self, new_char: char) {
+        self.params
+            .search_query
+            .search_string
+            .insert(self.params.search_query.cursor_pos, new_char);
+
+        self.move_cursor_right();
+    }
+
+    fn delete_char_left(&mut self) {
+        if self.params.search_query.cursor_pos != 0 {
+            // Method "remove" is not used on the saved text for deleting the selected char.
+            // Reason: Using remove on String works on bytes instead of the chars.
+            // Using remove would require special care because of char boundaries.
+
+            let current_index = self.params.search_query.cursor_pos;
+            let from_left_to_current_index = current_index - 1;
+
+            // Getting all characters before the selected character.
+            let before_char_to_delete = self
+                .params
+                .search_query
+                .search_string
+                .chars()
+                .take(from_left_to_current_index);
+            // Getting all characters after selected character.
+            let after_char_to_delete = self
+                .params
+                .search_query
+                .search_string
+                .chars()
+                .skip(current_index);
+
+            // Put all characters together except the selected one.
+            // By leaving the selected one out, it is forgotten and therefore deleted.
+            self.params.search_query.search_string =
+                before_char_to_delete.chain(after_char_to_delete).collect();
+            self.move_cursor_left();
+        }
+    }
+
+    fn delete_char_right(&mut self) {
+        if self.params.search_query.cursor_pos <= self.params.search_query.search_string.len() {
+            let current_index = self.params.search_query.cursor_pos;
+            let from_current_index_to_right = current_index + 1;
+
+            // Getting all characters before the selected character.
+            let before_char_to_delete = self
+                .params
+                .search_query
+                .search_string
+                .chars()
+                .take(current_index);
+            // Getting all characters after selected character.
+            let after_char_to_delete = self
+                .params
+                .search_query
+                .search_string
+                .chars()
+                .skip(from_current_index_to_right);
+
+            self.params.search_query.search_string =
+                before_char_to_delete.chain(after_char_to_delete).collect();
+        }
+    }
+
+    fn clamp_cursor(&self, new_cursor_pos: usize) -> usize {
+        new_cursor_pos.clamp(0, self.params.search_query.search_string.len())
     }
 }

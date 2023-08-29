@@ -35,7 +35,7 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 
     // content of the Main-Buffer
     match app.index {
-        0 => draw_home(f, chunks[1], block.clone(), app),
+        0 => draw_home(f, chunks[1], block.clone()),
         1 => draw_nyaa(f, chunks[1], block.clone(), app),
         2 => draw_downloads(f, chunks[1], block.clone(), app),
         _ => unreachable!(),
@@ -82,6 +82,8 @@ pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
 //-----Popups----------------------------------------------------------------------------------------------------------------------------------------------------
 
 pub fn draw_find<B: Backend>(f: &mut Frame<B>, app: &mut App) {
+    let mut search = app.params.search_query.search_string.clone();
+
     let info = vec![
         text::Line::from(""),
         text::Line::from(vec![
@@ -91,7 +93,7 @@ pub fn draw_find<B: Backend>(f: &mut Frame<B>, app: &mut App) {
                     " {}",
                     app.params.filter.items[app.params.filter.state.selected().unwrap()].label
                 ),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(Color::LightCyan),
             ),
         ]),
         text::Line::from(""),
@@ -107,12 +109,25 @@ pub fn draw_find<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         ]),
         text::Line::from(""),
         text::Line::from(vec![
-            Span::raw("[s]earch: "),
-            Span::styled(
-                format!(" {}", app.params.search_query),
-                Style::default().fg(Color::LightCyan),
-            ),
+            if app.params.search_query.is_insert_mode {
+                search.insert(app.params.search_query.cursor_pos, '|');
+
+                Span::styled(
+                    "[Esc] search: ",
+                    Style::default()
+                        .add_modifier(Modifier::BOLD)
+                        .add_modifier(Modifier::REVERSED),
+                )
+            } else {
+                Span::raw("[i]nsert search: ")
+            },
+            Span::styled(format!(" {}", search), Style::default()),
         ]),
+        text::Line::from(""),
+        text::Line::from(Span::styled(
+            "[Enter] to search",
+            Style::default().add_modifier(Modifier::BOLD),
+        )),
     ];
 
     let area = centered_rect(50, 30, f.size());

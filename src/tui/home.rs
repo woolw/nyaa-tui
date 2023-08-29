@@ -1,7 +1,7 @@
-use crate::datamodel::{App, ControllEntry};
+use crate::datamodel::ControllEntry;
 use ratatui::{prelude::*, widgets::*};
 
-pub fn draw_home<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>, app: &App) {
+pub fn draw_home<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>) {
     let mut text = vec![text::Line::from("")];
 
     let controlls = ControllEntry::get_controlls();

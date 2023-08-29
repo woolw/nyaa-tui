@@ -206,7 +206,7 @@ impl Dropdown {
 pub struct QueryParameters {
     pub filter: StatefulList<Dropdown>,
     pub category: StatefulList<Dropdown>,
-    pub search_query: String,
+    pub search_query: SearchQuery,
     pub page: u32,
 }
 
@@ -215,8 +215,24 @@ impl QueryParameters {
         QueryParameters {
             filter: StatefulList::new_at_zero(Dropdown::get_filters()),
             category: StatefulList::new_at_zero(Dropdown::get_categories()),
-            search_query: String::from(""),
+            search_query: SearchQuery::new(),
             page: 1,
+        }
+    }
+}
+
+pub struct SearchQuery {
+    pub search_string: String,
+    pub is_insert_mode: bool,
+    pub cursor_pos: usize,
+}
+
+impl SearchQuery {
+    fn new() -> SearchQuery {
+        SearchQuery {
+            search_string: String::from(""),
+            is_insert_mode: false,
+            cursor_pos: 0,
         }
     }
 }

@@ -24,7 +24,7 @@ async fn get_response(params: &QueryParameters) -> String {
             "&f={}&c={}&q={}&p={}",
             params.filter.items[params.filter.state.selected().unwrap()].value,
             params.category.items[params.category.state.selected().unwrap()].value,
-            params.search_query,
+            params.search_query.search_string,
             params.page
         )
         .as_str(),

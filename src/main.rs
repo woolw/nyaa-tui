@@ -19,7 +19,7 @@ pub mod tui;
 async fn main() -> Result<(), io::Error> {
     // check if aria2 is installed
     // doesn't curently work bcs command is not found for some reason
-    // if let Err(err) = Command::new("command").args(["-v", "aria2c"]).status() {
+    // if let Err(err) = Command::new("which").arg("aria2").status() {
     //     println!("{err}");
     //     return Ok(());
     // }
@@ -67,7 +67,7 @@ fn download_entries(downloads: Vec<NyaaEntry>) {
         "-Z".to_string(),
     ];
 
-    for (_, download) in downloads.iter().enumerate() {
+    for download in downloads.iter() {
         if !download.download_links.magnetic.is_empty() {
             args_vec.push(format!("\"{}\"", download.download_links.magnetic));
         } else if !download.download_links.torrent.is_empty() {

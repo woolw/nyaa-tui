@@ -61,20 +61,22 @@ fn check_dependency() -> Result<ExitStatus, Error> {
 
 fn download_entries(downloads: Vec<NyaaEntry>) {
     let mut command = Command::new("aria2c");
-    let mut argsVec: Vec<String> = Vec::new();
+    let mut args_vec: Vec<String> = vec![
+        "-d".to_string(),
+        "~/Downloads".to_string(),
+        "--seed-time=0".to_string(),
+        "-Z".to_string(),
+    ];
 
     for (_, download) in downloads.iter().enumerate() {
         if !download.download_links.magnetic.is_empty() {
-            argsVec.push(format!("\"{}\"", download.download_links.magnetic));
+            args_vec.push(format!("\"{}\"", download.download_links.magnetic));
         } else if !download.download_links.torrent.is_empty() {
-            argsVec.push(format!("\"{}\"", download.download_links.torrent));
+            args_vec.push(format!("\"{}\"", download.download_links.torrent));
         }
     }
 
-    if argsVec.len() > 0 {
-        command
-            .args(["-d", "~/Downloads", "--seed-time=0", "-Z"])
-            .spawn()
-            .expect("process failed");
+    if args_vec.len() > 4 {
+        command.args(args_vec).spawn().expect("process failed");
     }
 }

@@ -1,81 +1,5 @@
-use ratatui::{prelude::*, widgets::*};
+use ratatui::widgets::*;
 use unhtml::FromHtml;
-
-//-----home------------------------------------------------------------------------------------------------------------------
-
-pub struct ControllEntry {
-    pub title: String,
-    pub modifier: Modifier,
-    pub color: Color,
-    pub text: String,
-}
-
-impl ControllEntry {
-    pub fn get_controlls() -> Vec<ControllEntry> {
-        vec![
-            ControllEntry {
-                title: String::from("Welcome to nyaa-tui:"),
-                modifier: Modifier::BOLD,
-                color: Color::Reset,
-                text: String::from(""),
-            },
-            ControllEntry {
-                title: String::from("Controlls:"),
-                modifier: Modifier::BOLD,
-                color: Color::Reset,
-                text: String::from(""),
-            },
-            ControllEntry {
-                title: String::from("left:"),
-                modifier: Modifier::ITALIC,
-                color: Color::Blue,
-                text: String::from(" [h], [BACK_TAB], [LEFT_ARROW_KEY]"),
-            },
-            ControllEntry {
-                title: String::from("right:"),
-                modifier: Modifier::ITALIC,
-                color: Color::Red,
-                text: String::from(" [l], [TAB], [RIGHT_ARROW_KEY]"),
-            },
-            ControllEntry {
-                title: String::from("up:"),
-                modifier: Modifier::ITALIC,
-                color: Color::Yellow,
-                text: String::from(" [j], [UP_ARROW_KEY]"),
-            },
-            ControllEntry {
-                title: String::from("down:"),
-                modifier: Modifier::ITALIC,
-                color: Color::Green,
-                text: String::from(" [k], [DOWN_ARROW_KEY]"),
-            },
-            ControllEntry {
-                title: String::from("select:"),
-                modifier: Modifier::ITALIC,
-                color: Color::Magenta,
-                text: String::from(" [ENTER], [SPACE_BAR]"),
-            },
-            ControllEntry {
-                title: String::from("load more entries:"),
-                modifier: Modifier::ITALIC,
-                color: Color::LightCyan,
-                text: String::from(" [p]"),
-            },
-            ControllEntry {
-                title: String::from("find:"),
-                modifier: Modifier::ITALIC,
-                color: Color::Rgb(0xff, 0x8c, 0x00),
-                text: String::from(" [f]"),
-            },
-            ControllEntry {
-                title: String::from("exit:"),
-                modifier: Modifier::ITALIC,
-                color: Color::White,
-                text: String::from(" [q]"),
-            },
-        ]
-    }
-}
 
 //-----find--------------------------------------------------------------------------------------------------------------
 
@@ -271,28 +195,6 @@ pub struct DownloadLinks {
     pub magnetic: String,
 }
 
-//-----downloads------------------------------------------------------------------------------------------------------------------
-
-pub enum DownloadState {
-    Queued,
-    Downloading,
-    Finished,
-}
-
-pub struct DownloadEntry {
-    pub entry: NyaaEntry,
-    pub download_state: DownloadState,
-}
-
-impl DownloadEntry {
-    pub fn new(entry: NyaaEntry) -> DownloadEntry {
-        DownloadEntry {
-            entry,
-            download_state: DownloadState::Queued,
-        }
-    }
-}
-
 //-----tui------------------------------------------------------------------------------------------------------------------
 
 pub struct App<'a> {
@@ -301,7 +203,7 @@ pub struct App<'a> {
     pub params: QueryParameters,
     pub popup_state: PopupStates,
     pub nyaa_entries: StatefulList<NyaaEntry>,
-    pub download_entries: StatefulList<DownloadEntry>,
+    pub download_entries: StatefulList<NyaaEntry>,
     pub has_next: bool,
 }
 

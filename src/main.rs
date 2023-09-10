@@ -6,8 +6,8 @@ use crossterm::{
 use datamodel::{App, NyaaEntry};
 use ratatui::{prelude::CrosstermBackend, Terminal};
 use std::{
-    io::{self, Error},
-    process::{Command, ExitStatus},
+    io::{self},
+    process::Command,
 };
 
 pub mod app;
@@ -17,10 +17,12 @@ pub mod tui;
 
 #[tokio::main]
 async fn main() -> Result<(), io::Error> {
-    if let Err(err) = check_dependency() {
-        println!("{err}");
-        return Ok(());
-    }
+    // check if aria2 is installed
+    // doesn't curently work bcs command is not found for some reason
+    // if let Err(err) = Command::new("command").args(["-v", "aria2c"]).status() {
+    //     println!("{err}");
+    //     return Ok(());
+    // }
 
     // setup terminal
     enable_raw_mode()?;
@@ -44,6 +46,7 @@ async fn main() -> Result<(), io::Error> {
     )?;
     terminal.show_cursor()?;
 
+    // start downloading if there are any in the list
     match res {
         Ok(opt) => match opt {
             Some(downloads) => download_entries(downloads),
@@ -53,10 +56,6 @@ async fn main() -> Result<(), io::Error> {
     }
 
     Ok(())
-}
-
-fn check_dependency() -> Result<ExitStatus, Error> {
-    Command::new("command").args(["-v", "aria2c"]).status()
 }
 
 fn download_entries(downloads: Vec<NyaaEntry>) {

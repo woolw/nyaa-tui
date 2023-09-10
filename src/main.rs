@@ -17,8 +17,8 @@ pub mod tui;
 
 #[tokio::main]
 async fn main() -> Result<(), io::Error> {
-    if let err = check_dependency() {
-        println!("{err:?}");
+    if let Err(err) = check_dependency() {
+        println!("{err}");
         return Ok(());
     }
 

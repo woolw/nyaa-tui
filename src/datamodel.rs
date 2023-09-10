@@ -68,6 +68,12 @@ impl ControllEntry {
                 text: String::from(" [f]"),
             },
             ControllEntry {
+                title: String::from("exit and start downloading:"),
+                modifier: Modifier::ITALIC,
+                color: Color::White,
+                text: String::from(" [d]"),
+            },
+            ControllEntry {
                 title: String::from("exit:"),
                 modifier: Modifier::ITALIC,
                 color: Color::White,
@@ -271,28 +277,6 @@ pub struct DownloadLinks {
     pub magnetic: String,
 }
 
-//-----downloads------------------------------------------------------------------------------------------------------------------
-
-pub enum DownloadState {
-    Queued,
-    Downloading,
-    Finished,
-}
-
-pub struct DownloadEntry {
-    pub entry: NyaaEntry,
-    pub download_state: DownloadState,
-}
-
-impl DownloadEntry {
-    pub fn new(entry: NyaaEntry) -> DownloadEntry {
-        DownloadEntry {
-            entry,
-            download_state: DownloadState::Queued,
-        }
-    }
-}
-
 //-----tui------------------------------------------------------------------------------------------------------------------
 
 pub struct App<'a> {
@@ -301,7 +285,7 @@ pub struct App<'a> {
     pub params: QueryParameters,
     pub popup_state: PopupStates,
     pub nyaa_entries: StatefulList<NyaaEntry>,
-    pub download_entries: StatefulList<DownloadEntry>,
+    pub download_entries: StatefulList<NyaaEntry>,
     pub has_next: bool,
 }
 

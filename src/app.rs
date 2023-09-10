@@ -1,5 +1,5 @@
 use crate::{
-    datamodel::{App, DownloadEntry, NyaaEntry, PopupStates, QueryParameters, StatefulList},
+    datamodel::{App, NyaaEntry, PopupStates, QueryParameters, StatefulList},
     scraper::get_body,
     tui::ui,
 };
@@ -22,7 +22,10 @@ impl<'a> App<'a> {
         }
     }
 
-    pub async fn run<B: Backend>(mut self, terminal: &mut Terminal<B>) -> io::Result<()> {
+    pub async fn run<B: Backend>(
+        mut self,
+        terminal: &mut Terminal<B>,
+    ) -> io::Result<Option<Vec<NyaaEntry>>> {
         loop {
             terminal.draw(|f| ui(f, &mut self))?;
 
@@ -54,7 +57,8 @@ impl<'a> App<'a> {
                             }
                             KeyCode::Char('p') => self.append_next_page().await,
                             KeyCode::Char('f') => self.popup_state = PopupStates::Find,
-                            KeyCode::Char('q') => return Ok(()),
+                            KeyCode::Char('d') => return Ok(Some(self.download_entries.items)),
+                            KeyCode::Char('q') => return Ok(None),
                             _ => {}
                         },
                         PopupStates::Find => match self.params.search_query.is_insert_mode {
@@ -183,10 +187,10 @@ impl<'a> App<'a> {
 
     fn add_download(&mut self, entry: NyaaEntry) {
         if !self.download_entries.items.iter().any(|x| {
-            x.entry.download_links.magnetic == entry.download_links.magnetic
-                || x.entry.download_links.torrent == entry.download_links.torrent
+            x.download_links.magnetic == entry.download_links.magnetic
+                || x.download_links.torrent == entry.download_links.torrent
         }) {
-            self.download_entries.items.push(DownloadEntry::new(entry));
+            self.download_entries.items.push(entry);
         }
     }
 

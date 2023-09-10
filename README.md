@@ -1,21 +1,10 @@
 # nyaa-tui
 
-small project to play around with rust
+WIP
 
-currently still very much so WIP
-
-## Notes
-
-- all popups will be blocking. you can't switch tabs until you closed a popup
-- nyaa_entries are sorted by seeders
-- downloads follow the first-in-first-out methodology
-
-
-### Current Features:
-
-- Fetch and extract data from nyaa.si
-- output the list of fetched entries
-</br></br>  
+small project to play around with rust  
+scrapes nyaa.si and allows you to download files from there using aria2.  
+only tested for the linux operating system.
 
 # Setup
 
@@ -49,8 +38,8 @@ none so far
 
 # Dependencies
 
-On Linux: 
 - openssl
+- aria2
 
 # Disclaimer 
 

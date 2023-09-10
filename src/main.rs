@@ -71,7 +71,10 @@ fn download_entries(downloads: Vec<NyaaEntry>) {
         if !download.download_links.magnetic.is_empty() {
             args_vec.push(format!("\"{}\"", download.download_links.magnetic));
         } else if !download.download_links.torrent.is_empty() {
-            args_vec.push(format!("\"{}\"", download.download_links.torrent));
+            args_vec.push(format!(
+                "\"https://nyaa.si{}\"",
+                download.download_links.torrent
+            ));
         }
     }
 

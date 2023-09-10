@@ -18,11 +18,16 @@ pub mod tui;
 #[tokio::main]
 async fn main() -> Result<(), io::Error> {
     // check if aria2 is installed
-    // doesn't curently work bcs command is not found for some reason
-    // if let Err(err) = Command::new("which").arg("aria2").status() {
-    //     println!("{err}");
-    //     return Ok(());
-    // }
+    if !Command::new("which")
+        .arg("aria2c")
+        .output()
+        .unwrap()
+        .stderr
+        .is_empty()
+    {
+        println!("aria2 not found");
+        return Ok(());
+    }
 
     // setup terminal
     enable_raw_mode()?;

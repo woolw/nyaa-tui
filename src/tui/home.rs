@@ -24,7 +24,7 @@ pub fn draw_home<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>) {
                     .add_modifier(Modifier::ITALIC)
                     .fg(Color::Yellow),
             ),
-            Span::from("[j], [UP_ARROW_KEY]"),
+            Span::from("[k], [UP_ARROW_KEY]"),
         ]),
         text::Line::from(vec![
             Span::styled(
@@ -33,7 +33,7 @@ pub fn draw_home<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>) {
                     .add_modifier(Modifier::ITALIC)
                     .fg(Color::Green),
             ),
-            Span::from("[k], [DOWN_ARROW_KEY]"),
+            Span::from("[j], [DOWN_ARROW_KEY]"),
         ]),
         text::Line::from(vec![
             Span::styled(

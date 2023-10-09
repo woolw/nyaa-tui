@@ -137,8 +137,8 @@ pub struct QueryParameters {
 impl QueryParameters {
     pub fn new() -> QueryParameters {
         QueryParameters {
-            filter: StatefulList::new_at_zero(Dropdown::get_filters()),
-            category: StatefulList::new_at_zero(Dropdown::get_categories()),
+            filter: StatefulList::new_at_pos(Dropdown::get_filters(), 0),
+            category: StatefulList::new_at_pos(Dropdown::get_categories(), 1),
             search_query: SearchQuery::new(),
             page: 1,
         }
@@ -220,13 +220,13 @@ impl<T> StatefulList<T> {
         }
     }
 
-    pub fn new_at_zero(items: Vec<T>) -> StatefulList<T> {
+    pub fn new_at_pos(items: Vec<T>, pos: usize) -> StatefulList<T> {
         let mut list = StatefulList {
             state: ListState::default(),
             items,
         };
 
-        list.state.select(Some(0));
+        list.state.select(Some(pos));
 
         list
     }

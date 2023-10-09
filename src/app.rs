@@ -46,10 +46,10 @@ impl<'a> App<'a> {
                             {
                                 self.next_tab()
                             }
-                            key if (key == KeyCode::Up || key == KeyCode::Char('j')) => {
+                            key if (key == KeyCode::Up || key == KeyCode::Char('k')) => {
                                 self.previous_entry()
                             }
-                            key if (key == KeyCode::Down || key == KeyCode::Char('k')) => {
+                            key if (key == KeyCode::Down || key == KeyCode::Char('j')) => {
                                 self.next_entry()
                             }
                             key if (key == KeyCode::Enter || key == KeyCode::Char(' ')) => {
@@ -70,6 +70,11 @@ impl<'a> App<'a> {
                                 KeyCode::Right => self.move_cursor_right(),
                                 KeyCode::Esc => {
                                     self.params.search_query.is_insert_mode = false;
+                                }
+                                KeyCode::Enter => {
+                                    self.params.search_query.is_insert_mode = false;
+                                    self.reload().await;
+                                    self.popup_state = PopupStates::None
                                 }
                                 _ => {}
                             },

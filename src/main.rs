@@ -66,8 +66,7 @@ async fn main() -> Result<(), io::Error> {
 fn download_entries(downloads: Vec<NyaaEntry>) {
     let mut command = Command::new("aria2c");
     let mut args_vec: Vec<String> = vec![
-        "-d".to_string(),
-        "~/Downloads".to_string(),
+        "--dir=${HOME}/Downloads".to_string(),
         "--seed-time=0".to_string(),
         "-Z".to_string(),
     ];
@@ -75,16 +74,16 @@ fn download_entries(downloads: Vec<NyaaEntry>) {
     for download in downloads.iter() {
         if !download.download_links.torrent.is_empty() {
             args_vec.push(format!(
-                "\"https://nyaa.si{}\"",
+                "https://nyaa.si{}",
                 download.download_links.torrent
             ));
         } else if !download.download_links.magnetic.is_empty() {
             args_vec.push("--enable-dht=true".to_string());
-            args_vec.push(format!("\"{}\"", download.download_links.magnetic));
+            args_vec.push(format!("{}", download.download_links.magnetic));
         }
     }
 
-    if args_vec.len() > 4 {
+    if args_vec.len() > 3 {
         command.args(args_vec).spawn().expect("process failed");
     }
 }

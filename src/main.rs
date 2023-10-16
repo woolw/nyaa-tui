@@ -84,6 +84,8 @@ fn download_entries(downloads: Vec<NyaaEntry>) {
     }
 
     if args_vec.len() > 3 {
-        command.args(args_vec).spawn().expect("process failed");
+        let mut process = command.args(args_vec).spawn().expect("process failed");
+
+        process.wait().unwrap();
     }
 }

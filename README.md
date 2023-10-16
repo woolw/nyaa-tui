@@ -1,10 +1,6 @@
 # nyaa-tui
 
-WIP
-
-prefers magnet links
-
-small project to play around with rust  
+small scraping project to play around with rust  
 scrapes nyaa.si and allows you to download files from there using aria2.  
 only tested for the linux operating system.
 

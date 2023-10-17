@@ -93,26 +93,36 @@ impl<'a> App<'a> {
                             },
                         },
                         PopupStates::AddDownload => match key.code {
-                            KeyCode::Char('y') => match self.nyaa_entries.state.selected() {
-                                Some(pos) => {
-                                    self.add_download(self.nyaa_entries.items[pos].clone());
-                                    self.popup_state = PopupStates::None;
+                            key if (key == KeyCode::Enter
+                                || key == KeyCode::Char(' ')
+                                || key == KeyCode::Char('y')) =>
+                            {
+                                match self.nyaa_entries.state.selected() {
+                                    Some(pos) => {
+                                        self.add_download(self.nyaa_entries.items[pos].clone());
+                                        self.popup_state = PopupStates::None;
+                                    }
+                                    None => {}
                                 }
-                                None => {}
-                            },
+                            }
                             key if (key == KeyCode::Char('n') || key == KeyCode::Esc) => {
                                 self.popup_state = PopupStates::None
                             }
                             _ => {}
                         },
                         PopupStates::RemoveDownload => match key.code {
-                            KeyCode::Char('y') => match self.download_entries.state.selected() {
-                                Some(pos) => {
-                                    self.remove_download(pos);
-                                    self.popup_state = PopupStates::None;
+                            key if (key == KeyCode::Enter
+                                || key == KeyCode::Char(' ')
+                                || key == KeyCode::Char('y')) =>
+                            {
+                                match self.download_entries.state.selected() {
+                                    Some(pos) => {
+                                        self.remove_download(pos);
+                                        self.popup_state = PopupStates::None;
+                                    }
+                                    None => {}
                                 }
-                                None => {}
-                            },
+                            }
                             key if (key == KeyCode::Char('n') || key == KeyCode::Esc) => {
                                 self.popup_state = PopupStates::None
                             }

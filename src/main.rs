@@ -72,14 +72,13 @@ fn download_entries(downloads: Vec<NyaaEntry>) {
     ];
 
     for download in downloads.iter() {
-        if !download.download_links.torrent.is_empty() {
+        if !download.download_links.magnetic.is_empty() {
+            args_vec.push(format!("{}", download.download_links.magnetic));
+        } else if !download.download_links.torrent.is_empty() {
             args_vec.push(format!(
                 "https://nyaa.si{}",
                 download.download_links.torrent
             ));
-        } else if !download.download_links.magnetic.is_empty() {
-            args_vec.push("--enable-dht=true".to_string());
-            args_vec.push(format!("{}", download.download_links.magnetic));
         }
     }
 

@@ -100,7 +100,9 @@ impl<'a> App<'a> {
                                 }
                                 None => {}
                             },
-                            KeyCode::Char('n') => self.popup_state = PopupStates::None,
+                            key if (key == KeyCode::Char('n') || key == KeyCode::Esc) => {
+                                self.popup_state = PopupStates::None
+                            }
                             _ => {}
                         },
                         PopupStates::RemoveDownload => match key.code {
@@ -111,7 +113,9 @@ impl<'a> App<'a> {
                                 }
                                 None => {}
                             },
-                            KeyCode::Char('n') => self.popup_state = PopupStates::None,
+                            key if (key == KeyCode::Char('n') || key == KeyCode::Esc) => {
+                                self.popup_state = PopupStates::None
+                            }
                             _ => {}
                         },
                         PopupStates::NoneSelected => match key.code {

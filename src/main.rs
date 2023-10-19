@@ -7,7 +7,9 @@ use datamodel::{App, NyaaEntry};
 use ratatui::{prelude::CrosstermBackend, Terminal};
 use std::{
     env,
-    io::{self},
+    fs::{self, File},
+    io::{self, BufReader},
+    path::PathBuf,
     process::Command,
 };
 
@@ -30,6 +32,7 @@ async fn main() -> Result<(), io::Error> {
         return Ok(());
     }
 
+    // check if any arguments were passed
     let args: Vec<String> = env::args().collect();
     let mut download_dir: Option<String> = None;
     for arg in args.iter() {
@@ -47,6 +50,18 @@ async fn main() -> Result<(), io::Error> {
         }
     }
 
+    // create PathBuf for saving / loading
+    let data_dir = match dirs::data_dir() {
+        Some(mut val) => {
+            val.push("nyaa-tui");
+            val.push("download_list.json");
+            val
+        }
+        None => {
+            panic!("no data_dir")
+        }
+    };
+
     // setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -54,8 +69,11 @@ async fn main() -> Result<(), io::Error> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    // create app and run it
-    let app = App::new().await;
+    // load save and create app with it
+    let app = match load_list(&data_dir) {
+        Some(saves) => App::new(saves).await,
+        None => App::new(vec![]).await,
+    };
 
     // start tui
     let res = app.run(&mut terminal).await;
@@ -71,9 +89,12 @@ async fn main() -> Result<(), io::Error> {
 
     // start downloading if there are any in the list
     match res {
-        Ok(opt) => match opt {
-            Some(downloads) => download_entries(downloads, download_dir),
-            None => {}
+        Ok(opt) => match opt.exit_condition {
+            datamodel::ExitCondition::Quit => {}
+            datamodel::ExitCondition::SaveList => save_list(opt.download_entries.items, data_dir),
+            datamodel::ExitCondition::Download => {
+                download_entries(opt.download_entries.items, download_dir)
+            }
         },
         Err(err) => println!("{err:?}"),
     }
@@ -105,5 +126,22 @@ fn download_entries(downloads: Vec<NyaaEntry>, download_dir: Option<String>) {
         let mut process = command.args(args_vec).spawn().expect("process failed");
 
         process.wait().unwrap();
+    }
+}
+
+fn load_list(data_dir: &PathBuf) -> Option<Vec<NyaaEntry>> {
+    match File::open(data_dir) {
+        Ok(file) => Some(serde_json::from_reader(BufReader::new(file)).unwrap()),
+        Err(_) => None,
+    }
+}
+
+fn save_list(downloads: Vec<NyaaEntry>, data_dir: PathBuf) {
+    match fs::create_dir_all(&data_dir.parent().unwrap()) {
+        Ok(_) => {
+            let list_json = serde_json::to_string_pretty(&downloads).unwrap();
+            fs::write(data_dir, list_json).unwrap();
+        }
+        Err(_) => {}
     }
 }

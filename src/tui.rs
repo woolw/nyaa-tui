@@ -48,6 +48,7 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         PopupStates::AddDownload => draw_add_download(f, app, block, area),
         PopupStates::RemoveDownload => draw_remove_download(f, app, block, area),
         PopupStates::NoneSelected => draw_none_selected(f, block, area),
+        PopupStates::ExitCondition => draw_exit(f, block, area),
         PopupStates::None => {}
     }
 }
@@ -149,6 +150,36 @@ pub fn draw_none_selected<B: Backend>(f: &mut Frame<B>, block: Block<'_>, area: 
         text::Line::from(""),
         text::Line::from(Span::raw("press q to exit this prompt.")),
     ];
+    let paragraph = Paragraph::new(info)
+        .block(block)
+        .alignment(Alignment::Center)
+        .wrap(Wrap { trim: true });
+
+    f.render_widget(Clear, area); //this clears out the background
+    f.render_widget(paragraph, area);
+}
+
+pub fn draw_exit<B: Backend>(f: &mut Frame<B>, block: Block<'_>, area: Rect) {
+    let info = vec![
+        text::Line::from(""),
+        text::Line::from(vec![Span::styled(
+            "[q]uit without saving / downloading",
+            Style::default().fg(Color::Red),
+        )]),
+        text::Line::from(vec![Span::styled(
+            "[s]ave your current download list for later",
+            Style::default().fg(Color::Green),
+        )]),
+        text::Line::from(vec![Span::styled(
+            "[d]ownload all from your list",
+            Style::default().fg(Color::LightCyan),
+        )]),
+        text::Line::from(vec![Span::styled(
+            "[Esc] to close this popup",
+            Style::default().fg(Color::Yellow),
+        )]),
+    ];
+
     let paragraph = Paragraph::new(info)
         .block(block)
         .alignment(Alignment::Center)

@@ -77,6 +77,9 @@ nyaa-tui --dir=${HOME}/Downloads
 - reqwest-middleware ([crates.io](https://crates.io/crates/reqwest-middleware) | [github](https://github.com/TrueLayer/reqwest-middleware))
 - tokio ([crates.io](https://crates.io/crates/tokio) | [github](https://github.com/tokio-rs/tokio))
 - unhtml ([crates.io](https://crates.io/crates/unhtml) | [github](https://github.com/Hexilee/unhtml.rs))
+- serde ([crates.io](https://crates.io/crates/serde) | [github](https://github.com/serde-rs/serde))
+- serde_json ([crates.io](https://crates.io/crates/serde_json) | [github](https://github.com/serde-rs/json))
+- dirs ([crates.io](https://crates.io/crates/dirs) | [github](https://github.com/dirs-dev/dirs-rs))
 
 ## Dependencies
 

@@ -72,15 +72,11 @@ pub fn draw_home<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>) {
             Span::from("[f]"),
         ]),
         text::Line::from(vec![
-            Span::styled("quit: ", Style::default().add_modifier(Modifier::ITALIC)),
-            Span::from("[q]"),
-        ]),
-        text::Line::from(vec![
             Span::styled(
-                "exit and download: ",
+                "exit with download-options: ",
                 Style::default().add_modifier(Modifier::ITALIC),
             ),
-            Span::from("[d]"),
+            Span::from("[q]"),
         ]),
     ];
 

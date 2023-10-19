@@ -30,6 +30,23 @@ async fn main() -> Result<(), io::Error> {
         return Ok(());
     }
 
+    let args: Vec<String> = env::args().collect();
+    let mut download_dir: Option<String> = None;
+    for arg in args.iter() {
+        match arg.as_str() {
+            "--info" => {
+                print!(
+                    "nyaa-tui version: {} \nauthor: {}",
+                    env!("CARGO_PKG_VERSION"),
+                    env!("CARGO_PKG_AUTHORS")
+                );
+                return Ok(());
+            }
+            arg if arg.starts_with("--dir=") => download_dir = Some(arg.to_string()),
+            _ => {}
+        }
+    }
+
     // setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -55,7 +72,7 @@ async fn main() -> Result<(), io::Error> {
     // start downloading if there are any in the list
     match res {
         Ok(opt) => match opt {
-            Some(downloads) => download_entries(downloads),
+            Some(downloads) => download_entries(downloads, download_dir),
             None => {}
         },
         Err(err) => println!("{err:?}"),
@@ -64,13 +81,13 @@ async fn main() -> Result<(), io::Error> {
     Ok(())
 }
 
-fn download_entries(downloads: Vec<NyaaEntry>) {
+fn download_entries(downloads: Vec<NyaaEntry>, download_dir: Option<String>) {
     let mut command = Command::new("aria2c");
     let mut args_vec: Vec<String> = vec!["--seed-time=0".to_string(), "-Z".to_string()];
 
-    let args: Vec<String> = env::args().collect();
-    if args.len() > 1 && args[1].starts_with("--dir=") {
-        args_vec.push(args[1].to_string());
+    match download_dir {
+        Some(val) => args_vec.push(val.to_string()),
+        None => {}
     }
 
     for download in downloads.iter() {

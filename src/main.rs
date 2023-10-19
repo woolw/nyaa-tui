@@ -6,6 +6,7 @@ use crossterm::{
 use datamodel::{App, NyaaEntry};
 use ratatui::{prelude::CrosstermBackend, Terminal};
 use std::{
+    env,
     io::{self},
     process::Command,
 };
@@ -65,11 +66,12 @@ async fn main() -> Result<(), io::Error> {
 
 fn download_entries(downloads: Vec<NyaaEntry>) {
     let mut command = Command::new("aria2c");
-    let mut args_vec: Vec<String> = vec![
-        "--dir=${HOME}/Downloads".to_string(),
-        "--seed-time=0".to_string(),
-        "-Z".to_string(),
-    ];
+    let mut args_vec: Vec<String> = vec!["--seed-time=0".to_string(), "-Z".to_string()];
+
+    let args: Vec<String> = env::args().collect();
+    if args.len() > 1 && args[1].starts_with("--dir=") {
+        args_vec.push(args[1].to_string());
+    }
 
     for download in downloads.iter() {
         if !download.download_links.magnetic.is_empty() {
@@ -82,7 +84,7 @@ fn download_entries(downloads: Vec<NyaaEntry>) {
         }
     }
 
-    if args_vec.len() > 3 {
+    if args_vec.len() > 2 {
         let mut process = command.args(args_vec).spawn().expect("process failed");
 
         process.wait().unwrap();

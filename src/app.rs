@@ -88,7 +88,9 @@ impl<'a> App<'a> {
                                     self.reload().await;
                                     self.popup_state = PopupStates::None
                                 }
-                                KeyCode::Char('q') => self.popup_state = PopupStates::None,
+                                key if (key == KeyCode::Char('q') || key == KeyCode::Esc) => {
+                                    self.popup_state = PopupStates::None
+                                }
                                 _ => {}
                             },
                         },

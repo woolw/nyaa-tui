@@ -1,4 +1,5 @@
 use ratatui::widgets::*;
+use serde::{Deserialize, Serialize};
 use unhtml::FromHtml;
 
 //-----find--------------------------------------------------------------------------------------------------------------
@@ -171,7 +172,7 @@ pub struct Body {
     pub next: Option<String>,
 }
 
-#[derive(FromHtml, Clone)]
+#[derive(FromHtml, Clone, Serialize, Deserialize)]
 pub struct NyaaEntry {
     #[html(selector = ".category-icon", attr = "alt")]
     pub category: String,
@@ -187,7 +188,7 @@ pub struct NyaaEntry {
     pub leecher: u32,
 }
 
-#[derive(FromHtml, Clone)]
+#[derive(FromHtml, Clone, Serialize, Deserialize)]
 pub struct DownloadLinks {
     #[html(selector = "a:nth-child(1)", attr = "href")]
     pub torrent: String,
@@ -205,6 +206,13 @@ pub struct App<'a> {
     pub nyaa_entries: StatefulList<NyaaEntry>,
     pub download_entries: StatefulList<NyaaEntry>,
     pub has_next: bool,
+    pub exit_condition: ExitCondition,
+}
+
+pub enum ExitCondition {
+    Quit,
+    SaveList,
+    Download,
 }
 
 pub struct StatefulList<T> {
@@ -276,4 +284,5 @@ pub enum PopupStates {
     AddDownload,
     RemoveDownload,
     NoneSelected,
+    ExitCondition,
 }

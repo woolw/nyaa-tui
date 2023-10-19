@@ -1,14 +1,14 @@
 use crate::{
-    datamodel::{App, NyaaEntry, PopupStates, QueryParameters, StatefulList},
+    datamodel::{App, ExitCondition, NyaaEntry, PopupStates, QueryParameters, StatefulList},
     scraper::get_body,
     tui::ui,
 };
 use crossterm::event::{self, *};
 use ratatui::{prelude::*, widgets::ListState};
-use std::io;
+use std::io::Result;
 
 impl<'a> App<'a> {
-    pub async fn new() -> App<'a> {
+    pub async fn new(saves: Vec<NyaaEntry>) -> App<'a> {
         let new_params = QueryParameters::new();
         let data = get_body(&new_params).await;
         App {
@@ -17,15 +17,13 @@ impl<'a> App<'a> {
             params: new_params,
             popup_state: PopupStates::None,
             nyaa_entries: StatefulList::with_items(data.entries),
-            download_entries: StatefulList::with_items(vec![]),
+            download_entries: StatefulList::with_items(saves),
             has_next: data.next.is_some(),
+            exit_condition: ExitCondition::SaveList,
         }
     }
 
-    pub async fn run<B: Backend>(
-        mut self,
-        terminal: &mut Terminal<B>,
-    ) -> io::Result<Option<Vec<NyaaEntry>>> {
+    pub async fn run<B: Backend>(mut self, terminal: &mut Terminal<B>) -> Result<App<'a>> {
         loop {
             terminal.draw(|f| ui(f, &mut self))?;
 
@@ -57,8 +55,9 @@ impl<'a> App<'a> {
                             }
                             KeyCode::Char('p') => self.append_next_page().await,
                             KeyCode::Char('f') => self.popup_state = PopupStates::Find,
-                            KeyCode::Char('d') => return Ok(Some(self.download_entries.items)),
-                            KeyCode::Char('q') => return Ok(None),
+                            KeyCode::Char('q') => {
+                                self.popup_state = PopupStates::ExitCondition;
+                            }
                             _ => {}
                         },
                         PopupStates::Find => match self.params.search_query.is_insert_mode {
@@ -127,6 +126,24 @@ impl<'a> App<'a> {
                             }
                             key if (key == KeyCode::Char('n') || key == KeyCode::Esc) => {
                                 self.popup_state = PopupStates::None
+                            }
+                            _ => {}
+                        },
+                        PopupStates::ExitCondition => match key.code {
+                            KeyCode::Char('q') => {
+                                self.exit_condition = ExitCondition::Quit;
+                                return Ok(self);
+                            }
+                            KeyCode::Char('s') => {
+                                self.exit_condition = ExitCondition::SaveList;
+                                return Ok(self);
+                            }
+                            KeyCode::Char('d') => {
+                                self.exit_condition = ExitCondition::Download;
+                                return Ok(self);
+                            }
+                            KeyCode::Esc => {
+                                self.popup_state = PopupStates::None;
                             }
                             _ => {}
                         },

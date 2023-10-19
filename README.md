@@ -52,6 +52,22 @@ sudo rm /usr/local/bin/nyaa-tui
 ```
 </details>
 
+## Usage
+
+<details><summary>Info</summary>
+
+Normal execution  
+This will download all content to the execution-directory:
+```
+nyaa-tui
+```   
+
+If you want to set the download location to another directory, use the `--dir=` flag followed by the full path:
+```
+nyaa-tui --dir=${HOME}/Downloads
+```
+</details>
+
 ## Crates used
 
 - crossterm ([crates.io](https://crates.io/crates/crossterm) | [github](https://github.com/crossterm-rs/crossterm))

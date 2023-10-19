@@ -64,6 +64,8 @@ async fn main() -> Result<(), io::Error> {
 }
 
 fn download_entries(downloads: Vec<NyaaEntry>) {
+    // let args: Vec<String> = env::args().collect();
+
     let mut command = Command::new("aria2c");
     let mut args_vec: Vec<String> = vec![
         "--dir=${HOME}/Downloads".to_string(),

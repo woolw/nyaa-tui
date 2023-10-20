@@ -90,10 +90,9 @@ pub fn draw_find<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         text::Line::from(vec![
             Span::raw("[f]ilter: "),
             Span::styled(
-                format!(
-                    " {}",
-                    app.params.filter.items[app.params.filter.state.selected().unwrap()].label
-                ),
+                app.params.filter.items[app.params.filter.state.selected().unwrap()]
+                    .label
+                    .to_string(),
                 Style::default().fg(Color::LightCyan),
             ),
         ]),
@@ -101,10 +100,9 @@ pub fn draw_find<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         text::Line::from(vec![
             Span::raw("[c]ategory: "),
             Span::styled(
-                format!(
-                    " {}",
-                    app.params.category.items[app.params.category.state.selected().unwrap()].label
-                ),
+                app.params.category.items[app.params.category.state.selected().unwrap()]
+                    .label
+                    .to_string(),
                 Style::default().fg(Color::LightMagenta),
             ),
         ]),
@@ -122,7 +120,7 @@ pub fn draw_find<B: Backend>(f: &mut Frame<B>, app: &mut App) {
             } else {
                 Span::raw("[i]nsert search: ")
             },
-            Span::styled(format!(" {}", search), Style::default()),
+            Span::styled(search, Style::default()),
         ]),
         text::Line::from(""),
         text::Line::from(Span::styled(

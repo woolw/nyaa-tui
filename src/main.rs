@@ -106,14 +106,13 @@ fn download_entries(downloads: Vec<NyaaEntry>, download_dir: Option<String>) {
     let mut command = Command::new("aria2c");
     let mut args_vec: Vec<String> = vec!["--seed-time=0".to_string(), "-Z".to_string()];
 
-    match download_dir {
-        Some(val) => args_vec.push(val.to_string()),
-        None => {}
+    if let Some(val) = download_dir {
+        args_vec.push(val.to_string())
     }
 
     for download in downloads.iter() {
         if !download.download_links.magnetic.is_empty() {
-            args_vec.push(format!("{}", download.download_links.magnetic));
+            args_vec.push(download.download_links.magnetic.to_string());
         } else if !download.download_links.torrent.is_empty() {
             args_vec.push(format!(
                 "https://nyaa.si{}",
@@ -137,11 +136,8 @@ fn load_list(data_dir: &PathBuf) -> Option<Vec<NyaaEntry>> {
 }
 
 fn save_list(downloads: Vec<NyaaEntry>, data_dir: PathBuf) {
-    match fs::create_dir_all(&data_dir.parent().unwrap()) {
-        Ok(_) => {
-            let list_json = serde_json::to_string_pretty(&downloads).unwrap();
-            fs::write(data_dir, list_json).unwrap();
-        }
-        Err(_) => {}
+    if fs::create_dir_all(data_dir.parent().unwrap()).is_ok() {
+        let list_json = serde_json::to_string_pretty(&downloads).unwrap();
+        fs::write(data_dir, list_json).unwrap();
     }
 }

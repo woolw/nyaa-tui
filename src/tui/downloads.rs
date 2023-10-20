@@ -19,26 +19,23 @@ pub fn draw_downloads<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>
         .highlight_symbol("> ");
     f.render_stateful_widget(download_entries, area, &mut app.download_entries.state);
 
-    match app.download_entries.state.selected() {
-        Some(pos) => {
-            let info = text::Line::from(vec![
-                Span::raw("["),
-                Span::styled(
-                    format!(" {} |", app.download_entries.items[pos].category),
-                    Style::default().fg(Color::LightMagenta),
-                ),
-                Span::styled(
-                    format!(" size: {} |", app.download_entries.items[pos].size),
-                    Style::default().fg(Color::LightBlue),
-                ),
-                Span::raw("]"),
-            ]);
-            let paragraph = Paragraph::new(info)
-                .alignment(Alignment::Center)
-                .wrap(Wrap { trim: true });
-            f.render_widget(paragraph, area);
-        }
-        None => {}
+    if let Some(pos) = app.download_entries.state.selected() {
+        let info = text::Line::from(vec![
+            Span::raw("["),
+            Span::styled(
+                format!(" {} |", app.download_entries.items[pos].category),
+                Style::default().fg(Color::LightMagenta),
+            ),
+            Span::styled(
+                format!(" size: {} |", app.download_entries.items[pos].size),
+                Style::default().fg(Color::LightBlue),
+            ),
+            Span::raw("]"),
+        ]);
+        let paragraph = Paragraph::new(info)
+            .alignment(Alignment::Center)
+            .wrap(Wrap { trim: true });
+        f.render_widget(paragraph, area);
     }
 }
 
@@ -56,7 +53,7 @@ pub fn draw_remove_download<B: Backend>(
         text::Line::from(vec![
             Span::raw("Do you want to remove "),
             Span::styled(
-                format!("{}", app.download_entries.items[pos].name),
+                app.download_entries.items[pos].name.to_string(),
                 Style::default().fg(Color::LightBlue),
             ),
             Span::raw(" from the download queue?"),

@@ -4,7 +4,7 @@ pub fn draw_home<B: Backend>(f: &mut Frame<B>, area: Rect, block: Block<'_>) {
     let text = vec![
         text::Line::from(""),
         text::Line::from(vec![Span::styled(
-            "Welcome to nyaa-tui:",
+            "Welcome to nyaa-tui!",
             Style::default().add_modifier(Modifier::BOLD),
         )]),
         text::Line::from(""),

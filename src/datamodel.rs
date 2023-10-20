@@ -240,7 +240,7 @@ impl<T> StatefulList<T> {
     }
 
     pub fn next(&mut self) {
-        if self.items.len() <= 0 {
+        if self.items.is_empty() {
             self.state = ListState::default();
             return;
         }
@@ -259,7 +259,7 @@ impl<T> StatefulList<T> {
     }
 
     pub fn previous(&mut self) {
-        if self.items.len() <= 0 {
+        if self.items.is_empty() {
             self.state = ListState::default();
             return;
         }

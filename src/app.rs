@@ -98,12 +98,9 @@ impl<'a> App<'a> {
                                 || key == KeyCode::Char(' ')
                                 || key == KeyCode::Char('y')) =>
                             {
-                                match self.nyaa_entries.state.selected() {
-                                    Some(pos) => {
-                                        self.add_download(self.nyaa_entries.items[pos].clone());
-                                        self.popup_state = PopupStates::None;
-                                    }
-                                    None => {}
+                                if let Some(pos) = self.nyaa_entries.state.selected() {
+                                    self.add_download(self.nyaa_entries.items[pos].clone());
+                                    self.popup_state = PopupStates::None;
                                 }
                             }
                             key if (key == KeyCode::Char('n') || key == KeyCode::Esc) => {
@@ -116,12 +113,9 @@ impl<'a> App<'a> {
                                 || key == KeyCode::Char(' ')
                                 || key == KeyCode::Char('y')) =>
                             {
-                                match self.download_entries.state.selected() {
-                                    Some(pos) => {
-                                        self.remove_download(pos);
-                                        self.popup_state = PopupStates::None;
-                                    }
-                                    None => {}
+                                if let Some(pos) = self.download_entries.state.selected() {
+                                    self.remove_download(pos);
+                                    self.popup_state = PopupStates::None;
                                 }
                             }
                             key if (key == KeyCode::Char('n') || key == KeyCode::Esc) => {
@@ -147,10 +141,11 @@ impl<'a> App<'a> {
                             }
                             _ => {}
                         },
-                        PopupStates::NoneSelected => match key.code {
-                            KeyCode::Char('q') => self.popup_state = PopupStates::None,
-                            _ => {}
-                        },
+                        PopupStates::NoneSelected => {
+                            if KeyCode::Char('q') == key.code {
+                                self.popup_state = PopupStates::None
+                            }
+                        }
                     }
                 }
             }
@@ -210,16 +205,11 @@ impl<'a> App<'a> {
     }
 
     async fn append_next_page(&mut self) {
-        match self.index {
-            1 => {
-                if self.has_next {
-                    self.params.page += 1;
-                    let mut next_page = get_body(&self.params).await;
-                    self.has_next = next_page.next.is_some();
-                    self.nyaa_entries.items.append(&mut next_page.entries)
-                }
-            }
-            _ => {}
+        if self.index == 1 && self.has_next {
+            self.params.page += 1;
+            let mut next_page = get_body(&self.params).await;
+            self.has_next = next_page.next.is_some();
+            self.nyaa_entries.items.append(&mut next_page.entries)
         }
     }
 

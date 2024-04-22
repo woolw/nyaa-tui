@@ -36,7 +36,10 @@ sudo cp nyaa-tui /usr/local/bin/
 
 <details><summary>Package</summary>
 
-soon
+nyaa-tui is now available in the AUR
+```
+yay -S nyaa-tui
+```
 </details>
 
 ## Uninstall
@@ -49,6 +52,11 @@ Just delete the cloned folder.
 - Binary
 ```
 sudo rm /usr/local/bin/nyaa-tui
+```
+
+- AUR
+```
+yay -R nyaa-tui
 ```
 </details>
 
